@@ -1,6 +1,5 @@
 import React from "react";
 import { Animate } from "react-move";
-import { easeLinear } from "d3-ease";
 import "./App.css";
 
 class App extends React.Component {
@@ -25,15 +24,21 @@ class App extends React.Component {
 const laneTypes = ["w", "w", "w", "w", "w", "g", "r", "r", "r", "r", "r"];
 const frogSize = 60;
 
-class Game extends React.Component {
-  constructor(props) {
-    super(props);
+interface GameState {
+  frogX: number,
+  frogLane: number,
+  frogDir: number
+}
 
-    this.numLanes = laneTypes.length + 2
-    this.gameWidth = 800;
-    this.gameHeight = frogSize * this.numLanes;
-    this.frogStartX = (this.gameWidth - frogSize) / 2;
-    this.frogStartLane = this.numLanes - 1;
+class Game extends React.Component<{}, GameState> {
+  numLanes = laneTypes.length + 2
+  gameWidth = 800;
+  gameHeight = frogSize * this.numLanes;
+  frogStartX = (this.gameWidth - frogSize) / 2;
+  frogStartLane = this.numLanes - 1;
+
+  constructor(props: {}) {
+    super(props);
 
     this.state = {
       frogX: this.frogStartX,
@@ -42,28 +47,28 @@ class Game extends React.Component {
     };
   }
 
-  handleKeyDown = e => {
+  handleKeyDown = (e: KeyboardEvent) => {
     switch (e.key) {
       case "ArrowUp":
-        this.setState(state => ({
+        this.setState((state: GameState) => ({
           frogLane: state.frogLane - 1,
           frogDir: 0
         }));
         break;
       case "ArrowDown":
-        this.setState(state => ({
+        this.setState((state: GameState) => ({
           frogLane: state.frogLane + 1,
           frogDir: 180
         }));
         break;
       case "ArrowLeft":
-        this.setState(state => ({
+        this.setState((state: GameState) => ({
           frogX: state.frogX - frogSize,
           frogDir: 270
         }));
         break;
       case "ArrowRight":
-        this.setState(state => ({
+        this.setState((state: GameState) => ({
           frogX: state.frogX + frogSize,
           frogDir: 90
         }));
@@ -113,7 +118,15 @@ class Game extends React.Component {
   }
 }
 
-class Frog extends React.Component {
+interface FrogProps {
+  x: number,
+  y: number,
+  startX: number,
+  startY: number,
+  dir: number
+}
+
+class Frog extends React.Component<FrogProps, {}> {
   render() {
     let { x, y, startX, startY } = this.props;
 
@@ -128,8 +141,7 @@ class Frog extends React.Component {
           moveY: [y - startY],
           timing: {
             delay: 0,
-            duration: 80,
-            ease: easeLinear
+            duration: 80
           }
         }}
       >
@@ -162,7 +174,11 @@ class Frog extends React.Component {
   }
 }
 
-const Lane = ({ backgroundColor, ...props }) => {
+interface LaneProps {
+  backgroundColor: string
+}
+
+const Lane = ({backgroundColor} : LaneProps) => {
   return (
     <div
       style={{
@@ -174,15 +190,15 @@ const Lane = ({ backgroundColor, ...props }) => {
   );
 };
 
-const GrassLane = props => {
+const GrassLane = () => {
   return <Lane backgroundColor="green"></Lane>;
 };
 
-const RoadLane = props => {
+const RoadLane = () => {
   return <Lane backgroundColor="grey"></Lane>;
 };
 
-const WaterLane = props => {
+const WaterLane = () => {
   return <Lane backgroundColor="blue"></Lane>;
 };
 

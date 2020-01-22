@@ -2,6 +2,7 @@ import React, { FunctionComponent } from "react";
 import { Animate } from "react-move";
 import { Dispatch } from "redux";
 import { connect } from "react-redux";
+import { Swipeable, EventData } from "react-swipeable";
 import "./App.css";
 import { frogSize, gameWidth } from "./constants";
 import { LaneType, ReducerState, ActionType, ReducerAction } from "./types";
@@ -15,7 +16,7 @@ export class App extends React.Component {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          height: "100vh"
+          height: "700px" // TODO fix 100vh for mobile
         }}
       >
         <GameWithRedux />
@@ -25,7 +26,7 @@ export class App extends React.Component {
 }
 
 const lanePadding = 3;
-const laneHeight = frogSize + lanePadding;
+const laneHeight = frogSize + lanePadding * 2;
 const refreshInterval = 20; // 20ms refresh = 50 fps
 
 interface GameProps {
@@ -52,6 +53,7 @@ interface GameProps {
   isAlive: boolean;
   onKeyDown: (e: KeyboardEvent) => void;
   onTick: () => void;
+  onSwiped: (e: EventData) => void;
 }
 
 class Game extends React.Component<GameProps, {}> {
@@ -74,53 +76,55 @@ class Game extends React.Component<GameProps, {}> {
     let initialFrog = initFrog(numLanes);
 
     return (
-      <div
-        style={{
-          width: gameWidth,
-          height: gameHeight,
-          backgroundColor: "lightGrey",
-          overflow: "hidden",
-          position: "relative"
-        }}
-        onMouseDown={e => {
-          e.preventDefault();
-        }}
-      >
-        <Frog
-          x={this.props.frog.x}
-          y={this.props.frog.lane * laneHeight + lanePadding}
-          isAlive={this.props.isAlive}
-          direction={this.props.frog.direction}
-          startX={initialFrog.x}
-          startY={initialFrog.lane * laneHeight + lanePadding}
-        />
-        {this.props.lanes.map((lane, i) => {
-          switch (lane.laneType) {
-            case LaneType.GRASS:
-              return <Lane key={i + 1} color="green" />;
-            case LaneType.ROAD:
-              if (lane.laneObjects === undefined) throw new Error("asdf");
-              return (
-                <MovingLane
-                  key={i + 1}
-                  color="grey"
-                  laneObjects={lane.laneObjects}
-                />
-              );
-            case LaneType.WATER:
-              if (lane.laneObjects === undefined) throw new Error("asdf");
-              return (
-                <MovingLane
-                  key={i + 1}
-                  color="blue"
-                  laneObjects={lane.laneObjects}
-                />
-              );
-            default:
-              throw new Error("shouldn't get here");
-          }
-        })}
-      </div>
+      <Swipeable onSwiped={this.props.onSwiped}>
+        <div
+          style={{
+            width: gameWidth,
+            height: gameHeight,
+            backgroundColor: "lightGrey",
+            overflow: "hidden",
+            position: "relative"
+          }}
+          onMouseDown={e => {
+            e.preventDefault();
+          }}
+        >
+          <Frog
+            x={this.props.frog.x}
+            y={this.props.frog.lane * laneHeight + lanePadding}
+            isAlive={this.props.isAlive}
+            direction={this.props.frog.direction}
+            startX={initialFrog.x}
+            startY={initialFrog.lane * laneHeight + lanePadding}
+          />
+          {this.props.lanes.map((lane, i) => {
+            switch (lane.laneType) {
+              case LaneType.GRASS:
+                return <Lane key={i + 1} color="green" />;
+              case LaneType.ROAD:
+                if (lane.laneObjects === undefined) throw new Error("asdf");
+                return (
+                  <MovingLane
+                    key={i + 1}
+                    color="grey"
+                    laneObjects={lane.laneObjects}
+                  />
+                );
+              case LaneType.WATER:
+                if (lane.laneObjects === undefined) throw new Error("asdf");
+                return (
+                  <MovingLane
+                    key={i + 1}
+                    color="blue"
+                    laneObjects={lane.laneObjects}
+                  />
+                );
+              default:
+                throw new Error("shouldn't get here");
+            }
+          })}
+        </div>
+      </Swipeable>
     );
   }
 }
@@ -162,6 +166,9 @@ const mapDispatchToProps = (dispatch: Dispatch<ReducerAction>) => ({
   },
   onTick: () => {
     dispatch({ type: ActionType.TICK, tickAmount: refreshInterval });
+  },
+  onSwiped: (e: EventData) => {
+    dispatch({ type: ActionType.KEY_DOWN, key: "Arrow" + e.dir });
   }
 });
 
@@ -246,9 +253,9 @@ const Lane: FunctionComponent<LaneProps> = ({ color, children }) => {
   return (
     <div
       style={{
-        height: laneHeight,
+        height: laneHeight - 2 * lanePadding,
         width: "100%",
-        padding: `${lanePadding} 0`,
+        padding: `${lanePadding}px 0`,
         backgroundColor: color,
         overflow: "hidden",
         position: "relative"

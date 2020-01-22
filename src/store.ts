@@ -142,6 +142,10 @@ const checkIsAlive = (state: ReducerState): boolean => {
     return false;
   }
 
+  if (state.frog.x < 0 || state.frog.x > gameWidth - frogSize) {
+    return false;
+  }
+
   let laneState = state.lanes[state.frog.lane];
   if (laneState.tag === "static") {
     return true;
@@ -194,19 +198,31 @@ const reduceKeyboardEvent = (
   let newState = { ...state, frog: frogState };
   switch (action.key) {
     case "ArrowUp":
-      frogState.lane--;
+      if (frogState.lane > 0) {
+        frogState.lane--;
+      }
       frogState.direction = 0;
       break;
     case "ArrowDown":
-      frogState.lane++;
+      if (frogState.lane < state.lanes.length - 1) {
+        frogState.lane++;
+      }
       frogState.direction = 180;
       break;
     case "ArrowLeft":
-      frogState.x -= sideStepSize;
+      if (frogState.x - sideStepSize < 0) {
+        frogState.x = -frogSize / 2;
+      } else {
+        frogState.x -= sideStepSize;
+      }
       frogState.direction = 270;
       break;
     case "ArrowRight":
-      frogState.x += sideStepSize;
+      if (frogState.x + sideStepSize >= gameWidth - frogSize) {
+        frogState.x = gameWidth - frogSize / 2;
+      } else {
+        frogState.x += sideStepSize;
+      }
       frogState.direction = 90;
       break;
     default:
@@ -228,11 +244,21 @@ const reduceTickEvent = (
 
   // update frog position (if necessary)
   let laneState = state.lanes[state.frog.lane];
-  if (laneState.tag === "moving" && laneState.laneType === LaneType.WATER) {
+  if (
+    laneState.tag === "moving" &&
+    laneState.laneType === LaneType.WATER &&
+    state.isAlive
+  ) {
+    let newFrogX =
+      state.frog.x + laneState.speed * action.tickAmount * laneState.direction;
+    if (newFrogX < 0) {
+      newFrogX = -frogSize / 2;
+    } else if (newFrogX > gameWidth - frogSize) {
+      newFrogX = gameWidth - frogSize / 2;
+    }
     newState.frog = {
       ...state.frog,
-      x:
-        state.frog.x + laneState.speed * action.tickAmount * laneState.direction
+      x: newFrogX
     };
   }
   // check death

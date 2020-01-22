@@ -1,0 +1,23 @@
+{
+  "files": {
+    "main.css": "/frogger/static/css/main.d1b05096.chunk.css",
+    "main.js": "/frogger/static/js/main.9d46e374.chunk.js",
+    "main.js.map": "/frogger/static/js/main.9d46e374.chunk.js.map",
+    "runtime-main.js": "/frogger/static/js/runtime-main.beb97a03.js",
+    "runtime-main.js.map": "/frogger/static/js/runtime-main.beb97a03.js.map",
+    "static/js/2.300dfc9c.chunk.js": "/frogger/static/js/2.300dfc9c.chunk.js",
+    "static/js/2.300dfc9c.chunk.js.map": "/frogger/static/js/2.300dfc9c.chunk.js.map",
+    "index.html": "/frogger/index.html",
+    "precache-manifest.e208182dfeec151eb425c6ae853a90be.js": "/frogger/precache-manifest.e208182dfeec151eb425c6ae853a90be.js",
+    "service-worker.js": "/frogger/service-worker.js",
+    "static/css/main.d1b05096.chunk.css.map": "/frogger/static/css/main.d1b05096.chunk.css.map",
+    "static/js/2.300dfc9c.chunk.js.LICENSE": "/frogger/static/js/2.300dfc9c.chunk.js.LICENSE",
+    "static/media/frog.png": "/frogger/static/media/frog.d0763e0d.png"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.beb97a03.js",
+    "static/js/2.300dfc9c.chunk.js",
+    "static/css/main.d1b05096.chunk.css",
+    "static/js/main.9d46e374.chunk.js"
+  ]
+}

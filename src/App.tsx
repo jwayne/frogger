@@ -1,14 +1,17 @@
-import React, { FunctionComponent } from "react";
+import React, { useEffect } from "react";
 import { Animate } from "react-move";
-import { Dispatch } from "redux";
-import { connect } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { Swipeable, EventData } from "react-swipeable";
 import "./App.css";
 import { frogSize, gameWidth } from "./constants";
-import { LaneType, ReducerState, ActionType, ReducerAction } from "./types";
-import { getCurrentLaneObjectPositions, initFrog } from "./store";
+import { LaneType, ReducerState, ActionType } from "./types";
+import { getLaneObjectData, initFrog } from "./store";
 
 export class App extends React.Component {
+  componentDidMount() {
+    document.title = "Frogger"; // TODO make this work declaratively
+  }
+
   render() {
     return (
       <div
@@ -16,10 +19,10 @@ export class App extends React.Component {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          height: "700px" // TODO fix 100vh for mobile
+          height: "650px" // TODO fix 100vh for mobile
         }}
       >
-        <GameWithRedux />
+        <Game />
       </div>
     );
   }
@@ -29,161 +32,96 @@ const lanePadding = 3;
 const laneHeight = frogSize + lanePadding * 2;
 const refreshInterval = 20; // 20ms refresh = 50 fps
 
-interface GameProps {
-  frog: {
-    /** Horizontal position of frog as # pixels to the frog's left boundary */
-    x: number;
-    /** Vertical position of frog in as lane number, from top (0) to bottom */
-    lane: number;
-    /** Direction frog is facing, in css degrees */
-    direction: number;
-  };
-  lanes: {
-    laneType: LaneType;
-    laneObjects?: {
-      left: number;
-      length: number;
-      color: string;
-      id: number;
-    }[];
-  }[];
-  /** Number of millis that have passed since game start. */
-  time: number;
-  /** Whether the frog is still alive. */
-  isAlive: boolean;
-  onKeyDown: (e: KeyboardEvent) => void;
-  onTick: () => void;
-  onSwiped: (e: EventData) => void;
-}
+const Game: React.FC = props => {
+  const frog = useSelector((state: ReducerState) => state.frog);
+  const lanes = useSelector((state: ReducerState) => state.lanes);
+  const isAlive = useSelector((state: ReducerState) => state.isAlive);
 
-class Game extends React.Component<GameProps, {}> {
-  private tick: undefined | ReturnType<typeof setTimeout>;
+  const dispatch = useDispatch();
 
-  componentDidMount() {
-    document.addEventListener("keydown", this.props.onKeyDown);
-    this.tick = setInterval(this.props.onTick, refreshInterval);
-  }
+  useEffect(() => {
+    document.addEventListener("keydown", (e: KeyboardEvent) => {
+      switch (e.key) {
+        case "ArrowUp":
+        case "ArrowDown":
+        case "ArrowLeft":
+        case "ArrowRight":
+          dispatch({
+            type: ActionType.FROG_MOVE,
+            dir: e.key.substring(5)
+          });
+      }
+    });
+  }, [dispatch]);
 
-  componentWillUnmount() {
-    if (this.tick !== undefined) {
-      clearInterval(this.tick);
-    }
-  }
+  useEffect(() => {
+    const tick = setInterval(() => {
+      dispatch({ type: ActionType.TICK, tickAmount: refreshInterval });
+    }, refreshInterval);
+    return () => {
+      if (tick !== undefined) {
+        clearInterval(tick);
+      }
+    };
+  }, [dispatch]);
 
-  render() {
-    let numLanes = this.props.lanes.length;
-    let gameHeight = laneHeight * numLanes;
-    let initialFrog = initFrog(numLanes);
+  let numLanes = lanes.length;
+  let gameHeight = laneHeight * numLanes;
+  let initialFrog = initFrog(numLanes);
 
-    return (
-      <Swipeable onSwiped={this.props.onSwiped}>
-        <div
-          style={{
-            width: gameWidth,
-            height: gameHeight,
-            backgroundColor: "lightGrey",
-            overflow: "hidden",
-            position: "relative"
-          }}
-          onMouseDown={e => {
-            e.preventDefault();
-          }}
-        >
-          <Frog
-            x={this.props.frog.x}
-            y={this.props.frog.lane * laneHeight + lanePadding}
-            isAlive={this.props.isAlive}
-            direction={this.props.frog.direction}
-            startX={initialFrog.x}
-            startY={initialFrog.lane * laneHeight + lanePadding}
-          />
-          {this.props.lanes.map((lane, i) => {
-            switch (lane.laneType) {
-              case LaneType.GRASS:
-                return <Lane key={i + 1} color="green" />;
-              case LaneType.ROAD:
-                if (lane.laneObjects === undefined) throw new Error("asdf");
-                return (
-                  <MovingLane
-                    key={i + 1}
-                    color="grey"
-                    laneObjects={lane.laneObjects}
-                  />
-                );
-              case LaneType.WATER:
-                if (lane.laneObjects === undefined) throw new Error("asdf");
-                return (
-                  <MovingLane
-                    key={i + 1}
-                    color="blue"
-                    laneObjects={lane.laneObjects}
-                  />
-                );
-              default:
-                throw new Error("shouldn't get here");
-            }
-          })}
-        </div>
-      </Swipeable>
-    );
-  }
-}
+  return (
+    <Swipeable
+      onSwiped={(e: EventData) => {
+        dispatch({ type: ActionType.FROG_MOVE, key: e.dir });
+      }}
+    >
+      <div
+        style={{
+          width: gameWidth,
+          height: gameHeight,
+          backgroundColor: "lightGrey",
+          overflow: "hidden",
+          position: "relative"
+        }}
+        onMouseDown={e => {
+          e.preventDefault();
+        }}
+      >
+        <Frog
+          x={frog.x}
+          y={frog.lane * laneHeight + lanePadding}
+          isAlive={isAlive}
+          direction={frog.direction}
+          startX={initialFrog.x}
+          startY={initialFrog.lane * laneHeight + lanePadding}
+        />
+        {lanes.map((lane, i) => {
+          switch (lane.laneType) {
+            case LaneType.GRASS:
+              return <Lane key={i} color="green" />;
+            case LaneType.ROAD:
+              return <MovingLane key={i} color="grey" laneNumber={i} />;
+            case LaneType.WATER:
+              return <MovingLane key={i} color="blue" laneNumber={i} />;
+            default:
+              throw new Error("shouldn't get here");
+          }
+        })}
+      </div>
+    </Swipeable>
+  );
+};
 
-const mapStateToProps = (state: ReducerState) => ({
-  frog: {
-    x: state.frog.x,
-    lane: state.frog.lane,
-    direction: state.frog.direction
-  },
-  lanes: state.lanes.map(laneState => {
-    if (laneState.tag === "static") {
-      return {
-        laneType: laneState.laneType
-      };
-    } else {
-      let objectPositions = getCurrentLaneObjectPositions(
-        laneState,
-        state.time
-      );
-      return {
-        laneType: laneState.laneType,
-        laneObjects: laneState.laneObjects.map((laneObject, i) => ({
-          left: objectPositions[i],
-          length: laneState.length,
-          color: laneObject.color,
-          id: laneObject.id
-        }))
-      };
-    }
-  }),
-  time: state.time,
-  isAlive: state.isAlive
-});
-
-const mapDispatchToProps = (dispatch: Dispatch<ReducerAction>) => ({
-  onKeyDown: (e: KeyboardEvent) => {
-    dispatch({ type: ActionType.KEY_DOWN, key: e.key });
-  },
-  onTick: () => {
-    dispatch({ type: ActionType.TICK, tickAmount: refreshInterval });
-  },
-  onSwiped: (e: EventData) => {
-    dispatch({ type: ActionType.KEY_DOWN, key: "Arrow" + e.dir });
-  }
-});
-
-const GameWithRedux = connect(mapStateToProps, mapDispatchToProps)(Game);
-
-interface FrogProps {
+type FrogProps = {
   x: number;
   y: number;
   direction: number;
   isAlive: boolean;
   startX: number;
   startY: number;
-}
+};
 
-const Frog: FunctionComponent<FrogProps> = ({
+const Frog: React.FC<FrogProps> = ({
   x,
   y,
   direction,
@@ -245,11 +183,11 @@ const Frog: FunctionComponent<FrogProps> = ({
   </Animate>
 );
 
-interface LaneProps {
+type LaneProps = {
   color: string;
-}
+};
 
-const Lane: FunctionComponent<LaneProps> = ({ color, children }) => {
+const Lane: React.FC<LaneProps> = ({ color, children }) => {
   return (
     <div
       style={{
@@ -266,35 +204,32 @@ const Lane: FunctionComponent<LaneProps> = ({ color, children }) => {
   );
 };
 
-interface MovingLaneProps {
-  color: string;
-  laneObjects: {
-    left: number;
-    length: number;
-    color: string;
-    id: number;
-  }[];
-}
+type MovingLaneProps = LaneProps & {
+  laneNumber: number;
+};
 
-const MovingLane: FunctionComponent<MovingLaneProps> = ({
-  color,
-  laneObjects
-}) => (
-  <Lane color={color}>
-    {laneObjects.map(laneObject => (
-      <div
-        style={{
-          position: "absolute",
-          left: laneObject.left,
-          width: laneObject.length,
-          height: frogSize - lanePadding * 2,
-          backgroundColor: laneObject.color,
-          zIndex: 1
-        }}
-        key={laneObject.id}
-      ></div>
-    ))}
-  </Lane>
-);
+const MovingLane: React.FC<MovingLaneProps> = ({ color, laneNumber }) => {
+  let laneObjectData = useSelector((state: ReducerState) =>
+    getLaneObjectData(state, laneNumber)
+  );
+
+  return (
+    <Lane color={color}>
+      {laneObjectData.map(laneObject => (
+        <div
+          style={{
+            position: "absolute",
+            left: laneObject.left,
+            width: laneObject.length,
+            height: frogSize - lanePadding * 2,
+            backgroundColor: laneObject.color,
+            zIndex: 1
+          }}
+          key={laneObject.id}
+        ></div>
+      ))}
+    </Lane>
+  );
+};
 
 export default App;

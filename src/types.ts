@@ -1,3 +1,10 @@
+export type LaneObjectData = {
+  left: number;
+  length: number;
+  color: string;
+  id: number;
+};
+
 /* redux states */
 
 export type FrogState = {
@@ -16,13 +23,12 @@ export enum LaneType {
 }
 
 export type StaticLaneState = {
-  tag: "static";
-  laneType: LaneType;
+  laneType: LaneType.GRASS;
 };
 
 export type LaneObjectState = {
-  /** Left coordinate of object */
-  x: number;
+  /** Starting coordinate of object */
+  startPos: number;
   /** Id of object, for referencing */
   id: number;
   /** Color of object */
@@ -30,8 +36,7 @@ export type LaneObjectState = {
 };
 
 export type MovingLaneState = {
-  tag: "moving";
-  laneType: LaneType;
+  laneType: LaneType.ROAD | LaneType.WATER;
 
   /** speed of objects in lane, in num pixels to move per ms */
   speed: number;
@@ -61,13 +66,13 @@ export type ReducerState = {
 /* redux actions */
 
 export enum ActionType {
-  KEY_DOWN,
+  FROG_MOVE,
   TICK
 }
 
-export type KeyboardEventAction = {
-  type: ActionType.KEY_DOWN;
-  key: string;
+export type FrogMoveAction = {
+  type: ActionType.FROG_MOVE;
+  dir: "Up" | "Down" | "Left" | "Right";
 };
 
 export type TickEventAction = {
@@ -75,4 +80,4 @@ export type TickEventAction = {
   tickAmount: number;
 };
 
-export type ReducerAction = KeyboardEventAction | TickEventAction;
+export type ReducerAction = FrogMoveAction | TickEventAction;

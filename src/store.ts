@@ -6,8 +6,8 @@ import {
   LaneObjectState,
   LaneState,
   ReducerState,
-  MovingLaneState,
-  KeyboardEventAction,
+  LaneObjectData,
+  FrogMoveAction,
   TickEventAction,
   ReducerAction,
   ActionType,
@@ -42,15 +42,15 @@ const initLaneObjects = (
   colors: string[]
 ): LaneObjectState[] => {
   let laneObjects = [];
-  let x = _.random(minGap, maxGap);
+  let pos = _.random(minGap, maxGap);
   let id = 0;
-  while (x < laneObjectsApproxLoopLength) {
+  while (pos < laneObjectsApproxLoopLength) {
     laneObjects.push({
-      x: x,
+      startPos: pos,
       id: id++,
       color: _.sample(colors) || "black" // TODO how to handle situations like this?
     });
-    x += length + _.random(minGap, maxGap);
+    pos += length + _.random(minGap, maxGap);
   }
   return laneObjects;
 };
@@ -59,7 +59,6 @@ const initLaneObjects = (
 const initLane = (laneType: LaneType): LaneState => {
   if (laneType === LaneType.GRASS) {
     return {
-      tag: "static",
       laneType: LaneType.GRASS
     };
   }
@@ -85,7 +84,6 @@ const initLane = (laneType: LaneType): LaneState => {
   maxGap = secsToCross < 6 ? 480 : 240;
 
   return {
-    tag: "moving",
     laneType: laneType,
     speed: speed,
     direction: direction,
@@ -114,27 +112,53 @@ export const initState = (): ReducerState => {
   };
 };
 
-/* reducers */
+/* selectors */
 
-export const getCurrentLaneObjectPositions = (
-  laneState: MovingLaneState,
-  time: number
+export const getLaneObjectPositions = (
+  state: ReducerState,
+  laneNumber: number
 ): number[] => {
+  let laneState = state.lanes[laneNumber];
+  if (laneState.laneType === LaneType.GRASS) {
+    return [];
+  }
   let laneObjects = laneState.laneObjects;
-  let loopLength = laneObjects[laneObjects.length - 1].x + laneState.length;
-  let displacement = laneState.speed * time;
+  let loopLength =
+    laneObjects[laneObjects.length - 1].startPos + laneState.length;
+  let displacement = laneState.speed * state.time;
 
   if (laneState.direction < 0) {
     // moving left
     return laneObjects.map(laneObject => {
-      return 2 * gameWidth - ((laneObject.x + displacement) % loopLength);
+      return (
+        2 * gameWidth - ((laneObject.startPos + displacement) % loopLength)
+      );
     });
   } else {
     // moving right
     return laneObjects.map(laneObject => {
-      return -gameWidth + ((laneObject.x + displacement) % loopLength);
+      return -gameWidth + ((laneObject.startPos + displacement) % loopLength);
     });
   }
+};
+
+export const getLaneObjectData = (
+  state: ReducerState,
+  laneNumber: number
+): LaneObjectData[] => {
+  let laneState = state.lanes[laneNumber];
+  if (laneState.laneType === LaneType.GRASS) {
+    return [];
+  }
+
+  let length = laneState.length;
+  let objectPositions = getLaneObjectPositions(state, laneNumber);
+  return laneState.laneObjects.map((laneObject, i) => ({
+    left: objectPositions[i],
+    length: length,
+    color: laneObject.color,
+    id: laneObject.id
+  }));
 };
 
 const checkIsAlive = (state: ReducerState): boolean => {
@@ -146,11 +170,12 @@ const checkIsAlive = (state: ReducerState): boolean => {
     return false;
   }
 
+  let laneNumber = state.frog.lane;
   let laneState = state.lanes[state.frog.lane];
-  if (laneState.tag === "static") {
+  if (laneState.laneType === LaneType.GRASS) {
     return true;
   } else {
-    let objectPositions = getCurrentLaneObjectPositions(laneState, state.time);
+    let objectPositions = getLaneObjectPositions(state, laneNumber);
     let frogPos = state.frog.x;
     let objectLength = laneState.length;
 
@@ -176,57 +201,50 @@ const checkIsAlive = (state: ReducerState): boolean => {
   }
 };
 
-const reduceKeyboardEvent = (
+/* reducers */
+
+const reduceFrogMoveEvent = (
   state: ReducerState,
-  action: KeyboardEventAction
+  action: FrogMoveAction
 ): ReducerState => {
   if (!state.isAlive) {
-    return state;
-  }
-
-  if (
-    action.key !== "ArrowUp" &&
-    action.key !== "ArrowDown" &&
-    action.key !== "ArrowLeft" &&
-    action.key !== "ArrowRight"
-  ) {
     return state;
   }
 
   // move frog
   let frogState = { ...state.frog };
   let newState = { ...state, frog: frogState };
-  switch (action.key) {
-    case "ArrowUp":
+  switch (action.dir) {
+    case "Up":
       if (frogState.lane > 0) {
         frogState.lane--;
       }
       frogState.direction = 0;
       break;
-    case "ArrowDown":
+    case "Down":
       if (frogState.lane < state.lanes.length - 1) {
         frogState.lane++;
       }
       frogState.direction = 180;
       break;
-    case "ArrowLeft":
+    case "Left":
+      // If frog oversteps boundary, just coerce to equal boundary
       if (frogState.x - sideStepSize < 0) {
-        frogState.x = -frogSize / 2;
+        frogState.x = 0;
       } else {
         frogState.x -= sideStepSize;
       }
       frogState.direction = 270;
       break;
-    case "ArrowRight":
-      if (frogState.x + sideStepSize >= gameWidth - frogSize) {
-        frogState.x = gameWidth - frogSize / 2;
+    case "Right":
+      // If frog oversteps boundary, just coerce to equal boundary
+      if (frogState.x + sideStepSize > gameWidth - frogSize) {
+        frogState.x = gameWidth - frogSize;
       } else {
         frogState.x += sideStepSize;
       }
       frogState.direction = 90;
       break;
-    default:
-      throw new Error("shouldn't get here");
   }
   // check death
   newState.isAlive = checkIsAlive(newState);
@@ -245,15 +263,15 @@ const reduceTickEvent = (
   // update frog position (if necessary)
   let laneState = state.lanes[state.frog.lane];
   if (
-    laneState.tag === "moving" &&
     laneState.laneType === LaneType.WATER &&
     state.isAlive
   ) {
     let newFrogX =
       state.frog.x + laneState.speed * action.tickAmount * laneState.direction;
-    if (newFrogX < 0) {
+    // Don't let the frog get off the map
+    if (newFrogX < -frogSize / 2) {
       newFrogX = -frogSize / 2;
-    } else if (newFrogX > gameWidth - frogSize) {
+    } else if (newFrogX > gameWidth - frogSize / 2) {
       newFrogX = gameWidth - frogSize / 2;
     }
     newState.frog = {
@@ -278,7 +296,7 @@ export const rootReducer: Reducer<ReducerState, ReducerAction> = (
   switch (action.type) {
     case ActionType.TICK:
       return reduceTickEvent(state, action);
-    case ActionType.KEY_DOWN:
-      return reduceKeyboardEvent(state, action);
+    case ActionType.FROG_MOVE:
+      return reduceFrogMoveEvent(state, action);
   }
 };

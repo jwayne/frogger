@@ -1,4 +1,4 @@
-import React, { useEffect, CSSProperties, useCallback } from "react";
+import React, { useEffect, useCallback } from "react";
 import { Animate } from "react-move";
 import { useSelector, useDispatch } from "react-redux";
 import { Swipeable, EventData } from "react-swipeable";
@@ -54,6 +54,7 @@ const App: React.FC = () => {
         justifyContent: "center",
         alignItems: "center",
         height: window.innerHeight,
+        overflow: "hidden",
         fontSize: fontSize
       }}
     >
@@ -66,7 +67,7 @@ const App: React.FC = () => {
               return "";
             }
           case GameStatus.MAIN_MENU:
-            return <StartScreen />;
+            return <MainMenu />;
           case GameStatus.PLAYING:
             return <Game />;
         }
@@ -93,22 +94,26 @@ const GameStartButton: React.FC<GameStartButtonProps> = ({ mapType }) => {
       style={{
         width: "40%",
         height: "20%",
-        textAlign: "center",
-        border: "3px solid black",
+        border: "3px solid #222",
         cursor: "pointer",
-        margin: "0.1em"
+        margin: "0.1em",
+        backgroundColor: "limegreen",
+        color: "#222",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center"
       }}
       className="start-button"
       onClick={() =>
         dispatch({ type: ActionType.START_GAME, mapType: mapType })
       }
     >
-      {mapType}
+      <div style={{ textAlign: "center" }}>{mapType}</div>
     </StartButton>
   );
 };
 
-const StartScreen: React.FC = () => {
+const MainMenu: React.FC = () => {
   const { gameWidth, gameHeight } = useSelector((state: ReducerState) => {
     if (state.gameStatus !== GameStatus.MAIN_MENU) {
       throw new Error("Bad game status: " + state.gameStatus);
@@ -126,7 +131,7 @@ const StartScreen: React.FC = () => {
       style={{
         width: gameWidth,
         height: gameHeight,
-        backgroundColor: "lightGrey",
+        backgroundColor: "#ccc",
         display: "flex",
         flexWrap: "wrap",
         justifyContent: "space-evenly",
@@ -138,7 +143,7 @@ const StartScreen: React.FC = () => {
         style={{
           width: "100%",
           height: "40%",
-          fontSize: "250%",
+          fontSize: "220%",
           color: "green",
           display: "flex",
           justifyContent: "center",
@@ -258,7 +263,7 @@ const Game: React.FC = () => {
   return (
     <Swipeable
       onSwiped={(e: EventData) => {
-        dispatch({ type: ActionType.FROG_MOVE, key: e.dir });
+        dispatch({ type: ActionType.FROG_MOVE, dir: e.dir });
       }}
     >
       <div
@@ -438,11 +443,11 @@ const MovingLane: React.FC<MovingLaneProps> = ({ laneNumber, ...props }) => {
 };
 
 const DeadGameOverlay: React.FC = () => {
-  const mapType = useSelector((state: ReducerState) => {
+  const { isMobile, mapType } = useSelector((state: ReducerState) => {
     if (state.gameStatus !== GameStatus.PLAYING) {
       throw new Error("Bad game status: " + state.gameStatus);
     }
-    return state.mapType;
+    return { isMobile: state.gameSize.isMobile, mapType: state.mapType };
   });
   const dispatch = useDispatch();
 
@@ -463,21 +468,54 @@ const DeadGameOverlay: React.FC = () => {
     };
   });
 
-  return (
-    <GameOverlayDiv>
-      <div style={{ textAlign: "center", width: "100%", fontSize: "200%" }}>
-        YOU&nbsp;&nbsp;DIED
-      </div>
-      <div style={{ textAlign: "center", width: "100%" }}>
-        Press any key to restart
-        <br />
-        [esc] for main menu
-      </div>
-    </GameOverlayDiv>
-  );
+  if (isMobile) {
+    return (
+      <Swipeable
+        onSwiped={(e: EventData) => {
+            dispatch({ type: ActionType.RETURN_TO_MAIN_MENU });
+        }}
+      >
+        <GameOverlayDiv
+          onClick={(event: React.MouseEvent) => {
+            dispatch({ type: ActionType.START_GAME, mapType: mapType });
+          }}
+        >
+          <div style={{ textAlign: "center", width: "100%", fontSize: "200%" }}>
+            YOU&nbsp;&nbsp;DIED
+          </div>
+          <div style={{ textAlign: "center", width: "100%" }}>
+            [Tap] to restart
+            <br />
+            [Swipe] for main menu
+          </div>
+        </GameOverlayDiv>
+      </Swipeable>
+    );
+  } else {
+    return (
+      <GameOverlayDiv>
+        <div style={{ textAlign: "center", width: "100%", fontSize: "200%" }}>
+          YOU&nbsp;&nbsp;DIED
+        </div>
+        <div style={{ textAlign: "center", width: "100%" }}>
+          Press any key to restart
+          <br />
+          [esc] for main menu
+        </div>
+      </GameOverlayDiv>
+    );
+  }
 };
+
 const WonGameOverlay: React.FC = () => {
+  const isMobile = useSelector((state: ReducerState) => {
+    if (state.gameStatus !== GameStatus.PLAYING) {
+      throw new Error("Bad game status: " + state.gameStatus);
+    }
+    return state.gameSize.isMobile;
+  });
   const dispatch = useDispatch();
+
   const onKeyDown = useCallback(
     (ev: KeyboardEvent) => {
       dispatch({ type: ActionType.RETURN_TO_MAIN_MENU });
@@ -491,38 +529,52 @@ const WonGameOverlay: React.FC = () => {
     };
   });
 
-  return (
-    <GameOverlayDiv>
-      <div style={{ textAlign: "center", width: "100%", fontSize: "200%" }}>
-        YOU&nbsp;&nbsp;WON
-      </div>
-      <div style={{ textAlign: "center", width: "100%" }}>
-        [space] for main menu
-      </div>
-    </GameOverlayDiv>
-  );
+  if (isMobile) {
+    return (
+      <GameOverlayDiv
+        onClick={(event: React.MouseEvent) => {
+          dispatch({ type: ActionType.RETURN_TO_MAIN_MENU });
+        }}
+      >
+        <div style={{ textAlign: "center", width: "100%", fontSize: "200%" }}>
+          YOU&nbsp;&nbsp;WON
+        </div>
+        <div style={{ textAlign: "center", width: "100%" }}>
+          [Tap] for main menu
+        </div>
+      </GameOverlayDiv>
+    );
+  } else {
+    return (
+      <GameOverlayDiv>
+        <div style={{ textAlign: "center", width: "100%", fontSize: "200%" }}>
+          YOU&nbsp;&nbsp;WON
+        </div>
+        <div style={{ textAlign: "center", width: "100%" }}>
+          [space] for main menu
+        </div>
+      </GameOverlayDiv>
+    );
+  }
 };
 
-const GameOverlayDiv: React.FC = ({ children }) => {
-  // let { gameHeight, laneHeight } = useSelector((state: ReducerState) => {
-  //   if (state.gameStatus !== GameStatus.PLAYING) {
-  //     throw new Error("Bad game status: " + state.gameStatus);
-  //   }
-  //   return {
-  //     gameHeight: state.gameSize.gameHeight,
-  //     laneHeight: state.gameSize.laneHeight
-  //   };
-  // });
+type GameOverlayDivProps = {
+  onClick?: (event: React.MouseEvent) => void;
+};
+
+const GameOverlayDiv: React.FC<GameOverlayDivProps> = ({
+  onClick,
+  children
+}) => {
   return (
     <div
+      onClick={onClick}
       style={{
         position: "absolute",
         left: 0,
         top: 0,
-        // top: laneHeight,
         width: "100%",
         height: "100%",
-        // height: gameHeight - laneHeight * 2,
         zIndex: 2,
         opacity: "80%",
         backgroundColor: "#aaa",

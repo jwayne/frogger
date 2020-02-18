@@ -172,7 +172,7 @@ const reduceFrogMoveEvent = (
   action: FrogMoveAction
 ): ReducerState => {
   if (state.gameStatus !== GameStatus.PLAYING) {
-    throw new Error("Bad game status: " + state.gameStatus);
+    return state;
   }
   if (
     state.roundStatus === RoundStatus.DEAD ||
@@ -234,7 +234,7 @@ const reduceTickEvent = (
   action: TickEventAction
 ): ReducerState => {
   if (state.gameStatus !== GameStatus.PLAYING) {
-    throw new Error("Bad game status: " + state.gameStatus);
+    return state;
   }
 
   // advance time

@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from "react";
+import React, { useEffect, useCallback, CSSProperties } from "react";
 import { Animate } from "react-move";
 import { useSelector, useDispatch } from "react-redux";
 import { Swipeable, EventData } from "react-swipeable";
@@ -12,7 +12,7 @@ import {
   RoundStatus
 } from "./types";
 import { getLaneObjectData } from "./store";
-import { initFrog, MapTypes } from "./map";
+import { initFrog } from "./map";
 
 const refreshInterval = 20; // 20ms refresh = 50 fps
 const frogMoveDuration = 65;
@@ -78,30 +78,37 @@ const App: React.FC = () => {
 
 type GameStartButtonProps = {
   mapType: string;
+  isMobile: boolean;
+  style?: CSSProperties;
 };
 
 const StartButton = styled.div`
   &:hover {
     background-color: #aaa;
-    border: 3px solid green;
+    border: 4px solid green;
   }
 `;
-const GameStartButton: React.FC<GameStartButtonProps> = ({ mapType }) => {
+const GameStartButton: React.FC<GameStartButtonProps> = ({
+  mapType,
+  isMobile,
+  style
+}) => {
   const dispatch = useDispatch();
 
   return (
     <StartButton
       style={{
-        width: "40%",
-        height: "20%",
-        border: "3px solid #222",
+        width: isMobile ? "80%" : "40%",
+        height: isMobile ? "12%" : "20%",
+        border: "4px solid black",
         cursor: "pointer",
         margin: "0.1em",
         backgroundColor: "limegreen",
-        color: "#222",
+        color: "black",
         display: "flex",
         justifyContent: "center",
-        alignItems: "center"
+        alignItems: "center",
+        ...style
       }}
       className="start-button"
       onClick={() =>
@@ -114,17 +121,14 @@ const GameStartButton: React.FC<GameStartButtonProps> = ({ mapType }) => {
 };
 
 const MainMenu: React.FC = () => {
-  const { gameWidth, gameHeight } = useSelector((state: ReducerState) => {
-    if (state.gameStatus !== GameStatus.MAIN_MENU) {
-      throw new Error("Bad game status: " + state.gameStatus);
+  const { gameWidth, gameHeight, laneHeight, isMobile } = useSelector(
+    (state: ReducerState) => {
+      if (state.gameStatus !== GameStatus.MAIN_MENU) {
+        throw new Error("Bad game status: " + state.gameStatus);
+      }
+      return state.gameSize;
     }
-    return state.gameSize;
-  });
-
-  let items = [];
-  for (let i in MapTypes) {
-    items.push(<GameStartButton mapType={MapTypes[i]} key={i} />);
-  }
+  );
 
   return (
     <div
@@ -152,7 +156,27 @@ const MainMenu: React.FC = () => {
       >
         <div>Frogger</div>
       </div>
-      {items}
+      <GameStartButton mapType="CLASSIC" isMobile={isMobile} key={0} />
+      <GameStartButton
+        mapType="LOS ANGELES"
+        isMobile={isMobile}
+        key={1}
+        style={{
+          backgroundImage: `url(${require("./assets/asphalt.png")})`,
+          backgroundRepeat: "repeat-x repeat-y",
+          backgroundSize: `${laneHeight}px ${laneHeight}px`
+        }}
+      />
+      <GameStartButton
+        mapType="VENICE"
+        isMobile={isMobile}
+        key={2}
+        style={{
+          backgroundImage: `url(${require("./assets/water.png")})`,
+          backgroundRepeat: "repeat-x repeat-y",
+          backgroundSize: `${laneHeight}px ${laneHeight}px`
+        }}
+      />
     </div>
   );
 };
@@ -388,7 +412,11 @@ const Lane: React.FC<LaneProps> = ({
       style = { backgroundColor: "green" };
       break;
     case LaneType.ROAD:
-      style = { backgroundColor: "gray" };
+      style = {
+        backgroundImage: `url(${require("./assets/asphalt.png")})`,
+        backgroundRepeat: "repeat-x",
+        backgroundSize: `${laneHeight}px ${laneHeight}px`
+      };
       break;
     case LaneType.WATER:
       style = {
@@ -472,7 +500,7 @@ const DeadGameOverlay: React.FC = () => {
     return (
       <Swipeable
         onSwiped={(e: EventData) => {
-            dispatch({ type: ActionType.RETURN_TO_MAIN_MENU });
+          dispatch({ type: ActionType.RETURN_TO_MAIN_MENU });
         }}
       >
         <GameOverlayDiv

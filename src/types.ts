@@ -1,3 +1,6 @@
+const mapTypes = ["CLASSIC", "LOS ANGELES", "VENICE"] as const;
+export type MapType = typeof mapTypes[number];
+
 export type LaneObjectData = {
   left: number;
   length: number;
@@ -90,7 +93,7 @@ export type GamePlayingState = {
   gameStatus: GameStatus.PLAYING;
   gameSize: GameSizeState;
 
-  mapType: string;
+  mapType: MapType;
   frog: FrogState;
   lanes: LaneState[];
   /** Number of millis that have passed since game start. */
@@ -127,7 +130,7 @@ export type ScreenResizeAction = {
 
 export type StartGameAction = {
   type: ActionType.START_GAME;
-  mapType: string;
+  mapType: MapType;
 };
 
 export type FrogMoveAction = {

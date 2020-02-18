@@ -1,8 +1,6 @@
-import { LaneType, LaneObjectState, LaneState, FrogState } from "./types";
+import { LaneType, LaneObjectState, LaneState, FrogState, MapType } from "./types";
 import _ from "lodash";
 import { numLanes } from "./dimensions";
-
-export const MapTypes = ["CLASSIC", "LOS ANGELES", "VENICE"];
 
 export const initFrog = (gameWidth: number, frogSize: number): FrogState => {
   return {
@@ -77,7 +75,7 @@ export const initLane = (laneType: LaneType, gameWidth: number): LaneState => {
   };
 };
 
-export const initLanes = (mapType: string, gameWidth: number) => {
+export const initLanes = (mapType: MapType, gameWidth: number) => {
   let laneTypes: LaneType[];
   switch (mapType) {
     case "CLASSIC":

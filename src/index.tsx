@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
+import Favicon from "react-favicon";
 import { Provider } from "react-redux";
 import { createStore } from "redux";
 import "./index.css";
@@ -11,6 +12,7 @@ let store = createStore(rootReducer);
 
 ReactDOM.render(
   <Provider store={store}>
+    <Favicon url={require("./assets/frog.png")} />
     <App />
   </Provider>,
   document.getElementById("root")

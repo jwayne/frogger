@@ -18,7 +18,7 @@ export const initLaneObjects = (
   colors: string[],
   gameWidth: number
 ): LaneObjectState[] => {
-  const laneObjectsApproxLoopLength = 3 * gameWidth;
+  const laneObjectsApproxLoopLength = 4 * gameWidth;
 
   let laneObjects = [];
   let pos = _.random(minGap, maxGap);

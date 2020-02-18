@@ -526,7 +526,7 @@ const DeadGameOverlay: React.FC = () => {
           YOU&nbsp;&nbsp;DIED
         </div>
         <div style={{ textAlign: "center", width: "100%" }}>
-          Press any key to restart
+          [any key] to&nbsp;&nbsp;restart
           <br />
           [esc] for main menu
         </div>
@@ -565,7 +565,7 @@ const WonGameOverlay: React.FC = () => {
         }}
       >
         <div style={{ textAlign: "center", width: "100%", fontSize: "200%" }}>
-          YOU&nbsp;&nbsp;WON
+          YOU&nbsp;&nbsp;WIN
         </div>
         <div style={{ textAlign: "center", width: "100%" }}>
           [Tap] for main menu
@@ -576,10 +576,10 @@ const WonGameOverlay: React.FC = () => {
     return (
       <GameOverlayDiv>
         <div style={{ textAlign: "center", width: "100%", fontSize: "200%" }}>
-          YOU&nbsp;&nbsp;WON
+          YOU&nbsp;&nbsp;WIN
         </div>
         <div style={{ textAlign: "center", width: "100%" }}>
-          [space] for main menu
+          [any key] for main menu
         </div>
       </GameOverlayDiv>
     );

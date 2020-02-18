@@ -1,46 +1,177 @@
-import React, { useEffect } from "react";
+import React, { useEffect, CSSProperties, useCallback } from "react";
 import { Animate } from "react-move";
 import { useSelector, useDispatch } from "react-redux";
 import { Swipeable, EventData } from "react-swipeable";
+import styled from "styled-components";
 import "./App.css";
-import { frogSize, gameWidth } from "./constants";
-import { LaneType, ReducerState, ActionType } from "./types";
-import { getLaneObjectData, initFrog } from "./store";
+import {
+  LaneType,
+  ReducerState,
+  ActionType,
+  GameStatus,
+  RoundStatus
+} from "./types";
+import { getLaneObjectData } from "./store";
+import { initFrog, MapTypes } from "./map";
 
-export class App extends React.Component {
-  componentDidMount() {
-    document.title = "Frogger"; // TODO make this work declaratively
-  }
-
-  render() {
-    return (
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "650px" // TODO fix 100vh for mobile
-        }}
-      >
-        <Game />
-      </div>
-    );
-  }
-}
-
-const lanePadding = 3;
-const laneHeight = frogSize + lanePadding * 2;
 const refreshInterval = 20; // 20ms refresh = 50 fps
+const frogMoveDuration = 65;
+const alertDelay = 90;
 
-const Game: React.FC = props => {
-  const frog = useSelector((state: ReducerState) => state.frog);
-  const lanes = useSelector((state: ReducerState) => state.lanes);
-  const isAlive = useSelector((state: ReducerState) => state.isAlive);
-
+const App: React.FC = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    document.addEventListener("keydown", (e: KeyboardEvent) => {
+    document.title = "Frogger"; // TODO make this work declaratively
+  }, []);
+
+  useEffect(() => {
+    dispatch({
+      type: ActionType.SCREEN_RESIZE,
+      windowWidth: window.innerWidth,
+      windowHeight: window.innerHeight,
+      isMobile: "ontouchstart" in window || navigator.msMaxTouchPoints
+    });
+  }, [dispatch]);
+
+  let { gameStatus, loadingFailed } = useSelector((state: ReducerState) => {
+    return {
+      gameStatus: state.gameStatus,
+      loadingFailed:
+        state.gameStatus === GameStatus.LOADING && state.loadingFailed
+    };
+  });
+  let fontSize = useSelector((state: ReducerState) => {
+    if (state.gameStatus === GameStatus.LOADING) {
+      return "100%";
+    }
+    return state.gameSize.frogSize;
+  });
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: window.innerHeight,
+        fontSize: fontSize
+      }}
+    >
+      {(() => {
+        switch (gameStatus) {
+          case GameStatus.LOADING:
+            if (loadingFailed) {
+              return <div>Oops! Your screen is too small for this game.</div>;
+            } else {
+              return "";
+            }
+          case GameStatus.MAIN_MENU:
+            return <StartScreen />;
+          case GameStatus.PLAYING:
+            return <Game />;
+        }
+      })()}
+    </div>
+  );
+};
+
+type GameStartButtonProps = {
+  mapType: string;
+};
+
+const StartButton = styled.div`
+  &:hover {
+    background-color: #aaa;
+    border: 3px solid green;
+  }
+`;
+const GameStartButton: React.FC<GameStartButtonProps> = ({ mapType }) => {
+  const dispatch = useDispatch();
+
+  return (
+    <StartButton
+      style={{
+        width: "40%",
+        height: "20%",
+        textAlign: "center",
+        border: "3px solid black",
+        cursor: "pointer",
+        margin: "0.1em"
+      }}
+      className="start-button"
+      onClick={() =>
+        dispatch({ type: ActionType.START_GAME, mapType: mapType })
+      }
+    >
+      {mapType}
+    </StartButton>
+  );
+};
+
+const StartScreen: React.FC = () => {
+  const { gameWidth, gameHeight } = useSelector((state: ReducerState) => {
+    if (state.gameStatus !== GameStatus.MAIN_MENU) {
+      throw new Error("Bad game status: " + state.gameStatus);
+    }
+    return state.gameSize;
+  });
+
+  let items = [];
+  for (let i in MapTypes) {
+    items.push(<GameStartButton mapType={MapTypes[i]} key={i} />);
+  }
+
+  return (
+    <div
+      style={{
+        width: gameWidth,
+        height: gameHeight,
+        backgroundColor: "lightGrey",
+        display: "flex",
+        flexWrap: "wrap",
+        justifyContent: "space-evenly",
+        alignItems: "center",
+        alignContent: "center"
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          height: "40%",
+          fontSize: "250%",
+          color: "green",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center"
+        }}
+      >
+        <div>Frogger</div>
+      </div>
+      {items}
+    </div>
+  );
+};
+
+const Game: React.FC = () => {
+  const { gameSize, frog, lanes, roundStatus, readyToAlert } = useSelector(
+    (state: ReducerState) => {
+      if (state.gameStatus !== GameStatus.PLAYING) {
+        throw new Error("Bad game status: " + state.gameStatus);
+      }
+      return {
+        gameSize: state.gameSize,
+        frog: state.frog,
+        lanes: state.lanes,
+        roundStatus: state.roundStatus,
+        readyToAlert: state.readyToAlert
+      };
+    }
+  );
+  const { gameWidth, gameHeight, laneHeight, lanePadding, frogSize } = gameSize;
+
+  const dispatch = useDispatch();
+  const moveFrogOnKeyDown = useCallback(
+    (e: KeyboardEvent) => {
       switch (e.key) {
         case "ArrowUp":
         case "ArrowDown":
@@ -51,8 +182,16 @@ const Game: React.FC = props => {
             dir: e.key.substring(5)
           });
       }
-    });
-  }, [dispatch]);
+    },
+    [dispatch]
+  );
+
+  useEffect(() => {
+    document.addEventListener("keydown", moveFrogOnKeyDown);
+    return () => {
+      document.removeEventListener("keydown", moveFrogOnKeyDown);
+    };
+  });
 
   useEffect(() => {
     const tick = setInterval(() => {
@@ -65,9 +204,56 @@ const Game: React.FC = props => {
     };
   }, [dispatch]);
 
-  let numLanes = lanes.length;
-  let gameHeight = laneHeight * numLanes;
-  let initialFrog = initFrog(numLanes);
+  useEffect(() => {
+    if (
+      !readyToAlert &&
+      (roundStatus === RoundStatus.DEAD || roundStatus === RoundStatus.WON)
+    ) {
+      setTimeout(() => {
+        dispatch({ type: ActionType.READY_TO_ALERT });
+      }, alertDelay);
+    }
+  }, [readyToAlert, roundStatus, dispatch]);
+
+  let initialFrog = initFrog(gameWidth, frogSize);
+  let frogImg;
+  if (!readyToAlert) {
+    frogImg = (
+      <img
+        src={require("./assets/frog.png")}
+        alt="frog"
+        style={{
+          transform: `rotate(${frog.direction}deg)`,
+          width: frogSize,
+          height: frogSize
+        }}
+      />
+    );
+  } else if (roundStatus === RoundStatus.DEAD) {
+    frogImg = (
+      <img
+        src={require("./assets/dead.png")}
+        alt="dead"
+        style={{
+          width: frogSize,
+          height: frogSize
+        }}
+      />
+    );
+  } else if (roundStatus === RoundStatus.WON) {
+    frogImg = (
+      <img
+        src={require("./assets/happy_frog.gif")}
+        alt="dead"
+        style={{
+          width: frogSize,
+          height: frogSize
+        }}
+      />
+    );
+  } else {
+    throw new Error("should not get here");
+  }
 
   return (
     <Swipeable
@@ -90,23 +276,42 @@ const Game: React.FC = props => {
         <Frog
           x={frog.x}
           y={frog.lane * laneHeight + lanePadding}
-          isAlive={isAlive}
-          direction={frog.direction}
           startX={initialFrog.x}
           startY={initialFrog.lane * laneHeight + lanePadding}
-        />
+          frogSize={frogSize}
+        >
+          {frogImg}
+        </Frog>
         {lanes.map((lane, i) => {
           switch (lane.laneType) {
             case LaneType.GRASS:
-              return <Lane key={i} color="green" />;
+              return (
+                <Lane
+                  key={i}
+                  laneType={lane.laneType}
+                  laneHeight={laneHeight}
+                  lanePadding={lanePadding}
+                />
+              );
             case LaneType.ROAD:
-              return <MovingLane key={i} color="grey" laneNumber={i} />;
             case LaneType.WATER:
-              return <MovingLane key={i} color="blue" laneNumber={i} />;
+              return (
+                <MovingLane
+                  key={i}
+                  laneType={lane.laneType}
+                  laneHeight={laneHeight}
+                  lanePadding={lanePadding}
+                  laneNumber={i}
+                />
+              );
             default:
               throw new Error("shouldn't get here");
           }
         })}
+        {readyToAlert && roundStatus === RoundStatus.DEAD && (
+          <DeadGameOverlay />
+        )}
+        {readyToAlert && roundStatus === RoundStatus.WON && <WonGameOverlay />}
       </div>
     </Swipeable>
   );
@@ -115,19 +320,18 @@ const Game: React.FC = props => {
 type FrogProps = {
   x: number;
   y: number;
-  direction: number;
-  isAlive: boolean;
   startX: number;
   startY: number;
+  frogSize: number;
 };
 
 const Frog: React.FC<FrogProps> = ({
   x,
   y,
-  direction,
-  isAlive,
   startX,
-  startY
+  startY,
+  frogSize,
+  children
 }) => (
   <Animate
     start={{
@@ -139,7 +343,7 @@ const Frog: React.FC<FrogProps> = ({
       moveY: [y - startY],
       timing: {
         delay: 0,
-        duration: 75
+        duration: frogMoveDuration
       }
     }}
   >
@@ -152,49 +356,49 @@ const Frog: React.FC<FrogProps> = ({
           top: startY,
           width: frogSize,
           height: frogSize,
-          zIndex: 2
+          zIndex: 3
         }}
       >
-        <img
-          src={require("./assets/frog.png")}
-          alt="frog"
-          style={{
-            transform: `rotate(${direction}deg)`,
-            width: frogSize,
-            height: frogSize
-          }}
-        />
-        {isAlive || (
-          <img
-            src={require("./assets/dead2.png")}
-            alt="dead"
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: frogSize,
-              height: frogSize,
-              opacity: data.opacity
-            }}
-          />
-        )}
+        {children}
       </div>
     )}
   </Animate>
 );
 
 type LaneProps = {
-  color: string;
+  laneType: LaneType;
+  laneHeight: number;
+  lanePadding: number;
 };
 
-const Lane: React.FC<LaneProps> = ({ color, children }) => {
+const Lane: React.FC<LaneProps> = ({
+  laneType,
+  laneHeight,
+  lanePadding,
+  children
+}) => {
+  let style;
+  switch (laneType) {
+    case LaneType.GRASS:
+      style = { backgroundColor: "green" };
+      break;
+    case LaneType.ROAD:
+      style = { backgroundColor: "gray" };
+      break;
+    case LaneType.WATER:
+      style = {
+        backgroundImage: `url(${require("./assets/water.png")})`,
+        backgroundRepeat: "repeat-x",
+        backgroundSize: `${laneHeight}px ${laneHeight}px`
+      };
+  }
   return (
     <div
       style={{
-        height: laneHeight - 2 * lanePadding,
+        ...style,
+        height: laneHeight - lanePadding * 2,
         width: "100%",
         padding: `${lanePadding}px 0`,
-        backgroundColor: color,
         overflow: "hidden",
         position: "relative"
       }}
@@ -208,20 +412,21 @@ type MovingLaneProps = LaneProps & {
   laneNumber: number;
 };
 
-const MovingLane: React.FC<MovingLaneProps> = ({ color, laneNumber }) => {
+const MovingLane: React.FC<MovingLaneProps> = ({ laneNumber, ...props }) => {
+  const { laneHeight, lanePadding } = props;
   let laneObjectData = useSelector((state: ReducerState) =>
     getLaneObjectData(state, laneNumber)
   );
 
   return (
-    <Lane color={color}>
+    <Lane {...props}>
       {laneObjectData.map(laneObject => (
         <div
           style={{
             position: "absolute",
             left: laneObject.left,
             width: laneObject.length,
-            height: frogSize - lanePadding * 2,
+            height: laneHeight - lanePadding * 2,
             backgroundColor: laneObject.color,
             zIndex: 1
           }}
@@ -229,6 +434,105 @@ const MovingLane: React.FC<MovingLaneProps> = ({ color, laneNumber }) => {
         ></div>
       ))}
     </Lane>
+  );
+};
+
+const DeadGameOverlay: React.FC = () => {
+  const mapType = useSelector((state: ReducerState) => {
+    if (state.gameStatus !== GameStatus.PLAYING) {
+      throw new Error("Bad game status: " + state.gameStatus);
+    }
+    return state.mapType;
+  });
+  const dispatch = useDispatch();
+
+  const onKeyDown = useCallback(
+    (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") {
+        dispatch({ type: ActionType.RETURN_TO_MAIN_MENU });
+      } else {
+        dispatch({ type: ActionType.START_GAME, mapType: mapType });
+      }
+    },
+    [mapType, dispatch]
+  );
+  useEffect(() => {
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  });
+
+  return (
+    <GameOverlayDiv>
+      <div style={{ textAlign: "center", width: "100%", fontSize: "200%" }}>
+        YOU&nbsp;&nbsp;DIED
+      </div>
+      <div style={{ textAlign: "center", width: "100%" }}>
+        Press any key to restart
+        <br />
+        [esc] for main menu
+      </div>
+    </GameOverlayDiv>
+  );
+};
+const WonGameOverlay: React.FC = () => {
+  const dispatch = useDispatch();
+  const onKeyDown = useCallback(
+    (ev: KeyboardEvent) => {
+      dispatch({ type: ActionType.RETURN_TO_MAIN_MENU });
+    },
+    [dispatch]
+  );
+  useEffect(() => {
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  });
+
+  return (
+    <GameOverlayDiv>
+      <div style={{ textAlign: "center", width: "100%", fontSize: "200%" }}>
+        YOU&nbsp;&nbsp;WON
+      </div>
+      <div style={{ textAlign: "center", width: "100%" }}>
+        [space] for main menu
+      </div>
+    </GameOverlayDiv>
+  );
+};
+
+const GameOverlayDiv: React.FC = ({ children }) => {
+  // let { gameHeight, laneHeight } = useSelector((state: ReducerState) => {
+  //   if (state.gameStatus !== GameStatus.PLAYING) {
+  //     throw new Error("Bad game status: " + state.gameStatus);
+  //   }
+  //   return {
+  //     gameHeight: state.gameSize.gameHeight,
+  //     laneHeight: state.gameSize.laneHeight
+  //   };
+  // });
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: 0,
+        top: 0,
+        // top: laneHeight,
+        width: "100%",
+        height: "100%",
+        // height: gameHeight - laneHeight * 2,
+        zIndex: 2,
+        opacity: "80%",
+        backgroundColor: "#aaa",
+        display: "flex",
+        flexWrap: "wrap",
+        alignContent: "center"
+      }}
+    >
+      {children}
+    </div>
   );
 };
 

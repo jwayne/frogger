@@ -7,6 +7,15 @@ export type LaneObjectData = {
 
 /* redux states */
 
+export type GameSizeState = {
+  gameWidth: number;
+  gameHeight: number;
+  laneHeight: number;
+  lanePadding: number;
+  frogSize: number;
+  isMobile: boolean;
+};
+
 export type FrogState = {
   /** Horizontal position of frog as # pixels to the frog's left boundary */
   x: number;
@@ -54,21 +63,72 @@ export type MovingLaneState = {
 
 export type LaneState = StaticLaneState | MovingLaneState;
 
-export type ReducerState = {
+export enum GameStatus {
+  LOADING,
+  MAIN_MENU,
+  PLAYING
+}
+
+export type GameLoadingState = {
+  gameStatus: GameStatus.LOADING;
+  /** whether the game can be loaded given the screen size. */
+  loadingFailed: boolean;
+};
+
+export type GameMainMenuState = {
+  gameStatus: GameStatus.MAIN_MENU;
+  gameSize: GameSizeState;
+};
+
+export enum RoundStatus {
+  ALIVE,
+  DEAD,
+  WON
+}
+
+export type GamePlayingState = {
+  gameStatus: GameStatus.PLAYING;
+  gameSize: GameSizeState;
+
+  mapType: string;
   frog: FrogState;
   lanes: LaneState[];
   /** Number of millis that have passed since game start. */
   time: number;
-  /** Whether the frog is still alive. */
-  isAlive: boolean;
+  roundStatus: RoundStatus;
+  /** Whether the frog has moved yet. For displaying an info message. */
+  hasMoved: boolean;
+  /** Whether we're ready to show the death/win screen yet. */
+  readyToAlert: boolean;
 };
+
+export type ReducerState =
+  | GameLoadingState
+  | GameMainMenuState
+  | GamePlayingState;
 
 /* redux actions */
 
 export enum ActionType {
+  SCREEN_RESIZE,
+  START_GAME,
   FROG_MOVE,
-  TICK
+  TICK,
+  READY_TO_ALERT,
+  RETURN_TO_MAIN_MENU
 }
+
+export type ScreenResizeAction = {
+  type: ActionType.SCREEN_RESIZE;
+  windowWidth: number;
+  windowHeight: number;
+  isMobile: boolean;
+};
+
+export type StartGameAction = {
+  type: ActionType.START_GAME;
+  mapType: string;
+};
 
 export type FrogMoveAction = {
   type: ActionType.FROG_MOVE;
@@ -80,4 +140,18 @@ export type TickEventAction = {
   tickAmount: number;
 };
 
-export type ReducerAction = FrogMoveAction | TickEventAction;
+export type ReadyToAlertAction = {
+  type: ActionType.READY_TO_ALERT;
+};
+
+export type ReturnToMainMenuAction = {
+  type: ActionType.RETURN_TO_MAIN_MENU;
+};
+
+export type ReducerAction =
+  | ScreenResizeAction
+  | StartGameAction
+  | FrogMoveAction
+  | TickEventAction
+  | ReadyToAlertAction
+  | ReturnToMainMenuAction;

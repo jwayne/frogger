@@ -1,116 +1,24 @@
 import { Reducer } from "redux";
-import _ from "lodash";
-import { frogSize, gameWidth } from "./constants";
+import { computeGameDimensions } from "./dimensions";
 import {
   LaneType,
-  LaneObjectState,
-  LaneState,
   ReducerState,
   LaneObjectData,
   FrogMoveAction,
   TickEventAction,
   ReducerAction,
   ActionType,
-  FrogState
+  GameStatus,
+  ScreenResizeAction,
+  GameMainMenuState,
+  StartGameAction,
+  GamePlayingState,
+  GameLoadingState,
+  RoundStatus,
+  ReadyToAlertAction,
+  ReturnToMainMenuAction
 } from "./types";
-
-/* State initializers */
-
-const sideStepSize = frogSize;
-const laneTypes: LaneType[] = [
-  LaneType.GRASS,
-  LaneType.WATER,
-  LaneType.WATER,
-  LaneType.WATER,
-  LaneType.WATER,
-  LaneType.WATER,
-  LaneType.GRASS,
-  LaneType.ROAD,
-  LaneType.ROAD,
-  LaneType.ROAD,
-  LaneType.ROAD,
-  LaneType.ROAD,
-  LaneType.GRASS
-];
-const laneObjectsApproxLoopLength = 3 * gameWidth;
-
-/** Initialize lane objects given the lane's properties */
-const initLaneObjects = (
-  length: number,
-  minGap: number,
-  maxGap: number,
-  colors: string[]
-): LaneObjectState[] => {
-  let laneObjects = [];
-  let pos = _.random(minGap, maxGap);
-  let id = 0;
-  while (pos < laneObjectsApproxLoopLength) {
-    laneObjects.push({
-      startPos: pos,
-      id: id++,
-      color: _.sample(colors) || "black" // TODO how to handle situations like this?
-    });
-    pos += length + _.random(minGap, maxGap);
-  }
-  return laneObjects;
-};
-
-/** Initialize a lane for the given type */
-const initLane = (laneType: LaneType): LaneState => {
-  if (laneType === LaneType.GRASS) {
-    return {
-      laneType: LaneType.GRASS
-    };
-  }
-
-  let secsToCross, speed, direction, length, minGap, maxGap, colors;
-  switch (laneType) {
-    case LaneType.ROAD:
-      secsToCross = _.random(2, 8, true);
-      length = secsToCross < 6 ? 60 : 120;
-      colors = ["white", "#000", "#333", "red", "beige", "lightBlue"];
-      break;
-    case LaneType.WATER:
-      secsToCross = _.random(5, 8, true);
-      length = _.random(120, 240, true);
-      colors = ["#654321", "#654321", "#003300"];
-      break;
-    default:
-      throw new Error("shouldn't get here");
-  }
-  speed = gameWidth / (secsToCross * 1000);
-  direction = _.random(0, 1) * 2 - 1;
-  minGap = secsToCross < 6 ? 120 : 180;
-  maxGap = secsToCross < 6 ? 480 : 240;
-
-  return {
-    laneType: laneType,
-    speed: speed,
-    direction: direction,
-    length: length,
-    minGap: minGap,
-    maxGap: maxGap,
-    laneObjects: initLaneObjects(length, minGap, maxGap, colors)
-  };
-};
-
-export const initFrog = (numLanes: number): FrogState => {
-  return {
-    x: (gameWidth - frogSize) / 2,
-    lane: numLanes - 1,
-    direction: 0
-  };
-};
-
-export const initState = (): ReducerState => {
-  let lanes = laneTypes.map(initLane);
-  return {
-    frog: initFrog(lanes.length),
-    lanes: lanes,
-    time: 0,
-    isAlive: true
-  };
-};
+import { initLanes, initFrog } from "./map";
 
 /* selectors */
 
@@ -118,6 +26,10 @@ export const getLaneObjectPositions = (
   state: ReducerState,
   laneNumber: number
 ): number[] => {
+  if (state.gameStatus !== GameStatus.PLAYING) {
+    throw new Error("Bad game status: " + state.gameStatus);
+  }
+
   let laneState = state.lanes[laneNumber];
   if (laneState.laneType === LaneType.GRASS) {
     return [];
@@ -127,6 +39,7 @@ export const getLaneObjectPositions = (
     laneObjects[laneObjects.length - 1].startPos + laneState.length;
   let displacement = laneState.speed * state.time;
 
+  let gameWidth = state.gameSize.gameWidth;
   if (laneState.direction < 0) {
     // moving left
     return laneObjects.map(laneObject => {
@@ -146,6 +59,10 @@ export const getLaneObjectData = (
   state: ReducerState,
   laneNumber: number
 ): LaneObjectData[] => {
+  if (state.gameStatus !== GameStatus.PLAYING) {
+    throw new Error("Bad game status: " + state.gameStatus);
+  }
+
   let laneState = state.lanes[laneNumber];
   if (laneState.laneType === LaneType.GRASS) {
     return [];
@@ -161,19 +78,23 @@ export const getLaneObjectData = (
   }));
 };
 
-const checkIsAlive = (state: ReducerState): boolean => {
-  if (!state.isAlive) {
-    return false;
-  }
-
-  if (state.frog.x < 0 || state.frog.x > gameWidth - frogSize) {
-    return false;
+const getRoundStatus = (state: GamePlayingState): RoundStatus => {
+  if (
+    state.roundStatus === RoundStatus.DEAD ||
+    state.roundStatus === RoundStatus.WON
+  ) {
+    return state.roundStatus;
   }
 
   let laneNumber = state.frog.lane;
+  if (laneNumber === 0) {
+    return RoundStatus.WON;
+  }
+
+  let frogSize = state.gameSize.frogSize;
   let laneState = state.lanes[state.frog.lane];
   if (laneState.laneType === LaneType.GRASS) {
-    return true;
+    return RoundStatus.ALIVE;
   } else {
     let objectPositions = getLaneObjectPositions(state, laneNumber);
     let frogPos = state.frog.x;
@@ -184,17 +105,20 @@ const checkIsAlive = (state: ReducerState): boolean => {
       case LaneType.ROAD:
         for (let pos of objectPositions) {
           if (frogPos + frogSize > pos && frogPos < pos + objectLength) {
-            return false;
+            return RoundStatus.DEAD;
           }
         }
-        return true;
+        return RoundStatus.ALIVE;
       case LaneType.WATER:
         for (let pos of objectPositions) {
-          if (frogPos + frogSize > pos && frogPos < pos + objectLength) {
-            return true;
+          if (
+            frogPos > pos - frogSize / 2 &&
+            frogPos < pos + objectLength - frogSize / 2
+          ) {
+            return RoundStatus.ALIVE;
           }
         }
-        return false;
+        return RoundStatus.DEAD;
       default:
         throw new Error("shouldn't get here");
     }
@@ -203,17 +127,64 @@ const checkIsAlive = (state: ReducerState): boolean => {
 
 /* reducers */
 
+const reduceScreenResizeEvent = (
+  state: ReducerState,
+  action: ScreenResizeAction
+): GameLoadingState | GameMainMenuState => {
+  let dimensions = computeGameDimensions(
+    action.windowWidth,
+    action.windowHeight
+  );
+  if (dimensions == null) {
+    // Unable to load game
+    return { gameStatus: GameStatus.LOADING, loadingFailed: true };
+  }
+  return {
+    gameStatus: GameStatus.MAIN_MENU,
+    gameSize: { ...dimensions, isMobile: action.isMobile }
+  };
+};
+
+const reduceStartGameEvent = (
+  state: ReducerState,
+  action: StartGameAction
+): GamePlayingState => {
+  if (state.gameStatus === GameStatus.LOADING) {
+    throw new Error("Bad game status: " + state.gameStatus);
+  }
+
+  return {
+    gameStatus: GameStatus.PLAYING,
+    gameSize: state.gameSize,
+
+    mapType: action.mapType,
+    frog: initFrog(state.gameSize.gameWidth, state.gameSize.frogSize),
+    lanes: initLanes(action.mapType, state.gameSize.gameWidth),
+    time: 0,
+    roundStatus: RoundStatus.ALIVE,
+    hasMoved: false,
+    readyToAlert: false
+  };
+};
+
 const reduceFrogMoveEvent = (
   state: ReducerState,
   action: FrogMoveAction
 ): ReducerState => {
-  if (!state.isAlive) {
+  if (state.gameStatus !== GameStatus.PLAYING) {
+    throw new Error("Bad game status: " + state.gameStatus);
+  }
+  if (
+    state.roundStatus === RoundStatus.DEAD ||
+    state.roundStatus === RoundStatus.WON
+  ) {
     return state;
   }
 
   // move frog
   let frogState = { ...state.frog };
-  let newState = { ...state, frog: frogState };
+  let newState = { ...state, frog: frogState, hasMoved: true };
+  let frogSize = state.gameSize.frogSize;
   switch (action.dir) {
     case "Up":
       if (frogState.lane > 0) {
@@ -228,26 +199,33 @@ const reduceFrogMoveEvent = (
       frogState.direction = 180;
       break;
     case "Left":
-      // If frog oversteps boundary, just coerce to equal boundary
-      if (frogState.x - sideStepSize < 0) {
+      // Except on water lanes, if frog oversteps bounds, just coerce to equal boundary.
+      if (
+        state.lanes[frogState.lane].laneType !== LaneType.WATER &&
+        frogState.x - frogSize < 0
+      ) {
         frogState.x = 0;
       } else {
-        frogState.x -= sideStepSize;
+        frogState.x -= frogSize;
       }
       frogState.direction = 270;
       break;
     case "Right":
-      // If frog oversteps boundary, just coerce to equal boundary
-      if (frogState.x + sideStepSize > gameWidth - frogSize) {
+      let gameWidth = state.gameSize.gameWidth;
+      // Except on water lanes, if frog oversteps bounds, just coerce to equal boundary.
+      if (
+        state.lanes[frogState.lane].laneType !== LaneType.WATER &&
+        frogState.x + frogSize > gameWidth - frogSize
+      ) {
         frogState.x = gameWidth - frogSize;
       } else {
-        frogState.x += sideStepSize;
+        frogState.x += frogSize;
       }
       frogState.direction = 90;
       break;
   }
   // check death
-  newState.isAlive = checkIsAlive(newState);
+  newState.roundStatus = getRoundStatus(newState);
   return newState;
 };
 
@@ -255,34 +233,50 @@ const reduceTickEvent = (
   state: ReducerState,
   action: TickEventAction
 ): ReducerState => {
-  let newState = { ...state };
+  if (state.gameStatus !== GameStatus.PLAYING) {
+    throw new Error("Bad game status: " + state.gameStatus);
+  }
 
   // advance time
+  let newState = { ...state };
   newState.time = state.time + action.tickAmount;
 
   // update frog position (if necessary)
   let laneState = state.lanes[state.frog.lane];
   if (
     laneState.laneType === LaneType.WATER &&
-    state.isAlive
+    state.roundStatus === RoundStatus.ALIVE
   ) {
-    let newFrogX =
-      state.frog.x + laneState.speed * action.tickAmount * laneState.direction;
-    // Don't let the frog get off the map
-    if (newFrogX < -frogSize / 2) {
-      newFrogX = -frogSize / 2;
-    } else if (newFrogX > gameWidth - frogSize / 2) {
-      newFrogX = gameWidth - frogSize / 2;
-    }
     newState.frog = {
       ...state.frog,
-      x: newFrogX
+      x:
+        state.frog.x + laneState.speed * action.tickAmount * laneState.direction
     };
   }
   // check death
-  newState.isAlive = checkIsAlive(newState);
+  newState.roundStatus = getRoundStatus(newState);
 
   return newState;
+};
+
+const reduceReadyToAlertEvent = (
+  state: ReducerState,
+  action: ReadyToAlertAction
+): ReducerState => {
+  if (state.gameStatus !== GameStatus.PLAYING) {
+    throw new Error("Bad game status: " + state.gameStatus);
+  }
+  return { ...state, readyToAlert: true };
+};
+
+const reduceReturnToMainMenuEvent = (
+  state: ReducerState,
+  action: ReturnToMainMenuAction
+): ReducerState => {
+  if (state.gameStatus === GameStatus.LOADING) {
+    throw new Error("Bad game status: " + state.gameStatus);
+  }
+  return { gameStatus: GameStatus.MAIN_MENU, gameSize: state.gameSize };
 };
 
 export const rootReducer: Reducer<ReducerState, ReducerAction> = (
@@ -290,7 +284,7 @@ export const rootReducer: Reducer<ReducerState, ReducerAction> = (
   action: ReducerAction
 ): ReducerState => {
   if (!state) {
-    return initState();
+    return { gameStatus: GameStatus.LOADING, loadingFailed: false };
   }
 
   switch (action.type) {
@@ -298,5 +292,13 @@ export const rootReducer: Reducer<ReducerState, ReducerAction> = (
       return reduceTickEvent(state, action);
     case ActionType.FROG_MOVE:
       return reduceFrogMoveEvent(state, action);
+    case ActionType.SCREEN_RESIZE:
+      return reduceScreenResizeEvent(state, action);
+    case ActionType.START_GAME:
+      return reduceStartGameEvent(state, action);
+    case ActionType.READY_TO_ALERT:
+      return reduceReadyToAlertEvent(state, action);
+    case ActionType.RETURN_TO_MAIN_MENU:
+      return reduceReturnToMainMenuEvent(state, action);
   }
 };

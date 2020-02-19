@@ -1,10 +1,10 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "4c5b10a76a2af8ac5d3e49da37defab1",
+    "revision": "088eabf30d8f68e95505b470ec898812",
     "url": "/frogger/index.html"
   },
   {
-    "revision": "002e48a6b5ab17e70a9c",
+    "revision": "104f6fba0b84a4bbf12c",
     "url": "/frogger/static/css/main.df2f1330.chunk.css"
   },
   {
@@ -16,8 +16,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/frogger/static/js/2.ee08e1b9.chunk.js.LICENSE"
   },
   {
-    "revision": "002e48a6b5ab17e70a9c",
-    "url": "/frogger/static/js/main.ea9b11bf.chunk.js"
+    "revision": "104f6fba0b84a4bbf12c",
+    "url": "/frogger/static/js/main.fe48ee0e.chunk.js"
   },
   {
     "revision": "90f4ffa768892a56aece",
@@ -30,5 +30,9 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
     "revision": "d0763e0d0ed18c79ae2bafbaafc4bb50",
     "url": "/frogger/static/media/frog.d0763e0d.png"
+  },
+  {
+    "revision": "4984ccd6c0977e15ca999d4397552ba4",
+    "url": "/frogger/static/media/sos.4984ccd6.png"
   }
 ]);

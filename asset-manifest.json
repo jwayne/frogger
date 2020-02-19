@@ -1,14 +1,14 @@
 {
   "files": {
     "main.css": "/frogger/static/css/main.df2f1330.chunk.css",
-    "main.js": "/frogger/static/js/main.fe48ee0e.chunk.js",
-    "main.js.map": "/frogger/static/js/main.fe48ee0e.chunk.js.map",
+    "main.js": "/frogger/static/js/main.33dfdbc6.chunk.js",
+    "main.js.map": "/frogger/static/js/main.33dfdbc6.chunk.js.map",
     "runtime-main.js": "/frogger/static/js/runtime-main.beb97a03.js",
     "runtime-main.js.map": "/frogger/static/js/runtime-main.beb97a03.js.map",
     "static/js/2.ee08e1b9.chunk.js": "/frogger/static/js/2.ee08e1b9.chunk.js",
     "static/js/2.ee08e1b9.chunk.js.map": "/frogger/static/js/2.ee08e1b9.chunk.js.map",
     "index.html": "/frogger/index.html",
-    "precache-manifest.9887c434a4a56d029ac17275e1be2155.js": "/frogger/precache-manifest.9887c434a4a56d029ac17275e1be2155.js",
+    "precache-manifest.6f18a18d28fffc21c9dea28bd08548ac.js": "/frogger/precache-manifest.6f18a18d28fffc21c9dea28bd08548ac.js",
     "service-worker.js": "/frogger/service-worker.js",
     "static/css/main.df2f1330.chunk.css.map": "/frogger/static/css/main.df2f1330.chunk.css.map",
     "static/js/2.ee08e1b9.chunk.js.LICENSE": "/frogger/static/js/2.ee08e1b9.chunk.js.LICENSE",
@@ -20,6 +20,6 @@
     "static/js/runtime-main.beb97a03.js",
     "static/js/2.ee08e1b9.chunk.js",
     "static/css/main.df2f1330.chunk.css",
-    "static/js/main.fe48ee0e.chunk.js"
+    "static/js/main.33dfdbc6.chunk.js"
   ]
 }

@@ -180,7 +180,7 @@ const MainMenu: React.FC = () => {
       <GameStartButton
         mapType="SOS"
         isMobile={isMobile}
-        key={2}
+        key={3}
         style={{
           backgroundImage: `url(${require("./assets/sos.png")})`,
           backgroundPosition: "center",

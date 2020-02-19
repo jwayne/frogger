@@ -1,4 +1,4 @@
-const mapTypes = ["CLASSIC", "LOS ANGELES", "VENICE"] as const;
+const mapTypes = ["CLASSIC", "LOS ANGELES", "FLOODED", "SOS"] as const;
 export type MapType = typeof mapTypes[number];
 
 export type LaneObjectData = {

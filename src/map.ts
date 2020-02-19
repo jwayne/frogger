@@ -1,4 +1,10 @@
-import { LaneType, LaneObjectState, LaneState, FrogState, MapType } from "./types";
+import {
+  LaneType,
+  LaneObjectState,
+  LaneState,
+  FrogState,
+  MapType
+} from "./types";
 import _ from "lodash";
 import { numLanes } from "./dimensions";
 
@@ -112,7 +118,7 @@ export const initLanes = (mapType: MapType, gameWidth: number) => {
         LaneType.GRASS
       ];
       break;
-    case "VENICE":
+    case "FLOODED":
       laneTypes = [
         LaneType.GRASS,
         LaneType.WATER,
@@ -125,6 +131,23 @@ export const initLanes = (mapType: MapType, gameWidth: number) => {
         LaneType.WATER,
         LaneType.WATER,
         LaneType.WATER,
+        LaneType.WATER,
+        LaneType.GRASS
+      ];
+      break;
+    case "SOS":
+      laneTypes = [
+        LaneType.GRASS,
+        LaneType.WATER,
+        LaneType.ROAD,
+        LaneType.WATER,
+        LaneType.ROAD,
+        LaneType.WATER,
+        LaneType.WATER,
+        LaneType.ROAD,
+        LaneType.WATER,
+        LaneType.ROAD,
+        LaneType.ROAD,
         LaneType.WATER,
         LaneType.GRASS
       ];

@@ -168,13 +168,24 @@ const MainMenu: React.FC = () => {
         }}
       />
       <GameStartButton
-        mapType="VENICE"
+        mapType="FLOODED"
         isMobile={isMobile}
         key={2}
         style={{
           backgroundImage: `url(${require("./assets/water.png")})`,
           backgroundRepeat: "repeat-x repeat-y",
           backgroundSize: `${laneHeight}px ${laneHeight}px`
+        }}
+      />
+      <GameStartButton
+        mapType="SOS"
+        isMobile={isMobile}
+        key={2}
+        style={{
+          backgroundImage: `url(${require("./assets/sos.png")})`,
+          backgroundPosition: "center",
+          backgroundRepeat: "repeat-x repeat-y",
+          backgroundSize: `${laneHeight * 2}px ${laneHeight * 2}px`
         }}
       />
     </div>

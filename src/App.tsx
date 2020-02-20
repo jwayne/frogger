@@ -22,10 +22,6 @@ const App: React.FC = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    document.title = "Frogger"; // TODO make this work declaratively
-  }, []);
-
-  useEffect(() => {
     dispatch({
       type: ActionType.SCREEN_RESIZE,
       windowWidth: window.innerWidth,
@@ -99,7 +95,7 @@ const GameStartButton: React.FC<GameStartButtonProps> = ({
     <StartButton
       style={{
         width: isMobile ? "80%" : "40%",
-        height: isMobile ? "12%" : "20%",
+        height: isMobile ? "10%" : "20%",
         border: "4px solid black",
         cursor: "pointer",
         margin: "0.1em",
@@ -146,7 +142,7 @@ const MainMenu: React.FC = () => {
       <div
         style={{
           width: "100%",
-          height: "40%",
+          height: isMobile ? "30%" : "40%",
           fontSize: "220%",
           color: "green",
           display: "flex",
@@ -168,7 +164,7 @@ const MainMenu: React.FC = () => {
         }}
       />
       <GameStartButton
-        mapType="FLOODED"
+        mapType="VENICE"
         isMobile={isMobile}
         key={2}
         style={{

@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import Favicon from "react-favicon";
+import Helmet from "react-helmet";
 import { Provider } from "react-redux";
 import { createStore } from "redux";
 import "./index.css";
@@ -13,6 +14,12 @@ let store = createStore(rootReducer);
 ReactDOM.render(
   <Provider store={store}>
     <Favicon url={require("./assets/frog.png")} />
+    <Helmet>
+      <title>Frogger</title>
+      <meta name="description" content="Play your Frogger classic arcade game, with a twist." />
+      <meta property="og:title" content="Frogger" />
+      <meta property="og:image" content={require("./assets/frog.png")} />
+    </Helmet>
     <App />
   </Provider>,
   document.getElementById("root")

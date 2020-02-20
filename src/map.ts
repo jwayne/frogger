@@ -118,7 +118,7 @@ export const initLanes = (mapType: MapType, gameWidth: number) => {
         LaneType.GRASS
       ];
       break;
-    case "FLOODED":
+    case "VENICE":
       laneTypes = [
         LaneType.GRASS,
         LaneType.WATER,

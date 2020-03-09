@@ -16,7 +16,8 @@ import { initFrog } from "./map";
 
 const refreshInterval = 20; // 20ms refresh = 50 fps
 const frogMoveDuration = 65;
-const alertDelay = 90;
+const delayBeforeOverlay = 90;
+const delayBeforeInput = 250; // average human response time to visual stimulus
 
 const App: React.FC = () => {
   const dispatch = useDispatch();
@@ -189,20 +190,26 @@ const MainMenu: React.FC = () => {
 };
 
 const Game: React.FC = () => {
-  const { gameSize, frog, lanes, roundStatus, readyToAlert } = useSelector(
-    (state: ReducerState) => {
-      if (state.gameStatus !== GameStatus.PLAYING) {
-        throw new Error("Bad game status: " + state.gameStatus);
-      }
-      return {
-        gameSize: state.gameSize,
-        frog: state.frog,
-        lanes: state.lanes,
-        roundStatus: state.roundStatus,
-        readyToAlert: state.readyToAlert
-      };
+  const {
+    gameSize,
+    frog,
+    lanes,
+    roundStatus,
+    readyForOverlay,
+    readyForInput
+  } = useSelector((state: ReducerState) => {
+    if (state.gameStatus !== GameStatus.PLAYING) {
+      throw new Error("Bad game status: " + state.gameStatus);
     }
-  );
+    return {
+      gameSize: state.gameSize,
+      frog: state.frog,
+      lanes: state.lanes,
+      roundStatus: state.roundStatus,
+      readyForOverlay: state.readyForOverlay,
+      readyForInput: state.readyForInput
+    };
+  });
   const { gameWidth, gameHeight, laneHeight, lanePadding, frogSize } = gameSize;
 
   const dispatch = useDispatch();
@@ -241,19 +248,31 @@ const Game: React.FC = () => {
   }, [dispatch]);
 
   useEffect(() => {
+    // NOTE: This can create issues if we advance to another state before
+    // the timeout is reached, in which case the timeout's handler is called
+    // for the new state rather than the current state. However, this isn't
+    // an issue as the state machine is currently designed, since we never
+    // advance to a different state until readyForInput is true.
+    if (!readyForInput) {
+      setTimeout(() => {
+        dispatch({ type: ActionType.READY_FOR_INPUT });
+      }, delayBeforeInput);
+    }
+  }, [readyForInput, dispatch]);
+  useEffect(() => {
     if (
-      !readyToAlert &&
+      !readyForOverlay &&
       (roundStatus === RoundStatus.DEAD || roundStatus === RoundStatus.WON)
     ) {
       setTimeout(() => {
-        dispatch({ type: ActionType.READY_TO_ALERT });
-      }, alertDelay);
+        dispatch({ type: ActionType.READY_FOR_OVERLAY });
+      }, delayBeforeOverlay);
     }
-  }, [readyToAlert, roundStatus, dispatch]);
+  }, [readyForOverlay, roundStatus, dispatch]);
 
   let initialFrog = initFrog(gameWidth, frogSize);
   let frogImg;
-  if (!readyToAlert) {
+  if (!readyForOverlay) {
     frogImg = (
       <img
         src={require("./assets/frog.png")}
@@ -344,10 +363,12 @@ const Game: React.FC = () => {
               throw new Error("shouldn't get here");
           }
         })}
-        {readyToAlert && roundStatus === RoundStatus.DEAD && (
+        {readyForOverlay && roundStatus === RoundStatus.DEAD && (
           <DeadGameOverlay />
         )}
-        {readyToAlert && roundStatus === RoundStatus.WON && <WonGameOverlay />}
+        {readyForOverlay && roundStatus === RoundStatus.WON && (
+          <WonGameOverlay />
+        )}
       </div>
     </Swipeable>
   );

@@ -15,8 +15,9 @@ import {
   GamePlayingState,
   GameLoadingState,
   RoundStatus,
-  ReadyToAlertAction,
-  ReturnToMainMenuAction
+  ReadyForOverlayAction,
+  ReturnToMainMenuAction,
+  ReadyForInputAction
 } from "./types";
 import { initLanes, initFrog } from "./map";
 
@@ -152,6 +153,9 @@ const reduceStartGameEvent = (
   if (state.gameStatus === GameStatus.LOADING) {
     throw new Error("Bad game status: " + state.gameStatus);
   }
+  if (state.gameStatus === GameStatus.PLAYING && !state.readyForInput) {
+    return state;
+  }
 
   return {
     gameStatus: GameStatus.PLAYING,
@@ -163,7 +167,8 @@ const reduceStartGameEvent = (
     time: 0,
     roundStatus: RoundStatus.ALIVE,
     hasMoved: false,
-    readyToAlert: false
+    readyForOverlay: false,
+    readyForInput: false
   };
 };
 
@@ -176,7 +181,8 @@ const reduceFrogMoveEvent = (
   }
   if (
     state.roundStatus === RoundStatus.DEAD ||
-    state.roundStatus === RoundStatus.WON
+    state.roundStatus === RoundStatus.WON ||
+    !state.readyForInput
   ) {
     return state;
   }
@@ -259,14 +265,25 @@ const reduceTickEvent = (
   return newState;
 };
 
-const reduceReadyToAlertEvent = (
+const reduceReadyForOverlayEvent = (
   state: ReducerState,
-  action: ReadyToAlertAction
+  action: ReadyForOverlayAction
 ): ReducerState => {
   if (state.gameStatus !== GameStatus.PLAYING) {
     throw new Error("Bad game status: " + state.gameStatus);
   }
-  return { ...state, readyToAlert: true };
+  return { ...state, readyForOverlay: true, readyForInput: false };
+};
+
+const reduceReadyForInputEvent = (
+  state: ReducerState,
+  action: ReadyForInputAction
+): ReducerState => {
+  if (state.gameStatus !== GameStatus.PLAYING) {
+    throw new Error("Bad game status: " + state.gameStatus);
+  }
+  console.log("READY FOR INPUT: old state = " + state.readyForInput);
+  return { ...state, readyForInput: true };
 };
 
 const reduceReturnToMainMenuEvent = (
@@ -296,8 +313,10 @@ export const rootReducer: Reducer<ReducerState, ReducerAction> = (
       return reduceScreenResizeEvent(state, action);
     case ActionType.START_GAME:
       return reduceStartGameEvent(state, action);
-    case ActionType.READY_TO_ALERT:
-      return reduceReadyToAlertEvent(state, action);
+    case ActionType.READY_FOR_OVERLAY:
+      return reduceReadyForOverlayEvent(state, action);
+    case ActionType.READY_FOR_INPUT:
+      return reduceReadyForInputEvent(state, action);
     case ActionType.RETURN_TO_MAIN_MENU:
       return reduceReturnToMainMenuEvent(state, action);
   }

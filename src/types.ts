@@ -101,8 +101,17 @@ export type GamePlayingState = {
   roundStatus: RoundStatus;
   /** Whether the frog has moved yet. For displaying an info message. */
   hasMoved: boolean;
-  /** Whether we're ready to show the death/win screen yet. */
-  readyToAlert: boolean;
+  /** Whether we're ready to show the death/win screen yet. The idea being,
+   * the win/lose event fires once the frog starts moving, but we don't want
+   * to display the screen until the frog is done moving.
+   */
+  readyForOverlay: boolean;
+  /** Whether we're ready to handle keyboard input yet. The idea being,
+   * when we transition states, we want to give the user a little time to
+   * view the new state before their keyboard input is active, so that if
+   * they're spamming a key, they don't trigger an action unintentionally.
+   */
+  readyForInput: boolean;
 };
 
 export type ReducerState =
@@ -117,7 +126,8 @@ export enum ActionType {
   START_GAME,
   FROG_MOVE,
   TICK,
-  READY_TO_ALERT,
+  READY_FOR_OVERLAY,
+  READY_FOR_INPUT,
   RETURN_TO_MAIN_MENU
 }
 
@@ -143,8 +153,12 @@ export type TickEventAction = {
   tickAmount: number;
 };
 
-export type ReadyToAlertAction = {
-  type: ActionType.READY_TO_ALERT;
+export type ReadyForOverlayAction = {
+  type: ActionType.READY_FOR_OVERLAY;
+};
+
+export type ReadyForInputAction = {
+  type: ActionType.READY_FOR_INPUT;
 };
 
 export type ReturnToMainMenuAction = {
@@ -156,5 +170,6 @@ export type ReducerAction =
   | StartGameAction
   | FrogMoveAction
   | TickEventAction
-  | ReadyToAlertAction
+  | ReadyForOverlayAction
+  | ReadyForInputAction
   | ReturnToMainMenuAction;

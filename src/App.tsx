@@ -175,7 +175,7 @@ const MainMenu: React.FC = () => {
         }}
       />
       <GameStartButton
-        mapType="SOS"
+        mapType="EXPERT"
         isMobile={isMobile}
         key={3}
         style={{

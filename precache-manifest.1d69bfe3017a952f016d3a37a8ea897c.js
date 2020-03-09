@@ -1,10 +1,10 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "83a73b7dbf3fa251f5548fb60660bffd",
+    "revision": "c3f999d2058a276ad76ae19563c1327e",
     "url": "/frogger/index.html"
   },
   {
-    "revision": "94a90db141dfc88e57ff",
+    "revision": "e6965b974ff8aa524539",
     "url": "/frogger/static/css/main.df2f1330.chunk.css"
   },
   {
@@ -16,8 +16,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/frogger/static/js/2.3ff48eab.chunk.js.LICENSE"
   },
   {
-    "revision": "94a90db141dfc88e57ff",
-    "url": "/frogger/static/js/main.9ad68061.chunk.js"
+    "revision": "e6965b974ff8aa524539",
+    "url": "/frogger/static/js/main.60bae7da.chunk.js"
   },
   {
     "revision": "90f4ffa768892a56aece",

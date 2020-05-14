@@ -1,25 +1,25 @@
 {
   "files": {
-    "main.css": "/frogger/static/css/main.df2f1330.chunk.css",
-    "main.js": "/frogger/static/js/main.60bae7da.chunk.js",
-    "main.js.map": "/frogger/static/js/main.60bae7da.chunk.js.map",
-    "runtime-main.js": "/frogger/static/js/runtime-main.beb97a03.js",
-    "runtime-main.js.map": "/frogger/static/js/runtime-main.beb97a03.js.map",
-    "static/js/2.3ff48eab.chunk.js": "/frogger/static/js/2.3ff48eab.chunk.js",
-    "static/js/2.3ff48eab.chunk.js.map": "/frogger/static/js/2.3ff48eab.chunk.js.map",
-    "index.html": "/frogger/index.html",
-    "precache-manifest.1d69bfe3017a952f016d3a37a8ea897c.js": "/frogger/precache-manifest.1d69bfe3017a952f016d3a37a8ea897c.js",
-    "service-worker.js": "/frogger/service-worker.js",
-    "static/css/main.df2f1330.chunk.css.map": "/frogger/static/css/main.df2f1330.chunk.css.map",
-    "static/js/2.3ff48eab.chunk.js.LICENSE": "/frogger/static/js/2.3ff48eab.chunk.js.LICENSE",
-    "static/media/index.css": "/frogger/static/media/ARCADECLASSIC.96411199.TTF",
-    "static/media/frog.png": "/frogger/static/media/frog.d0763e0d.png",
-    "static/media/sos.png": "/frogger/static/media/sos.4984ccd6.png"
+    "main.css": "/static/css/main.d2d13b94.chunk.css",
+    "main.js": "/static/js/main.a41aeb3d.chunk.js",
+    "main.js.map": "/static/js/main.a41aeb3d.chunk.js.map",
+    "runtime-main.js": "/static/js/runtime-main.6e67da31.js",
+    "runtime-main.js.map": "/static/js/runtime-main.6e67da31.js.map",
+    "static/js/2.ff3c6e55.chunk.js": "/static/js/2.ff3c6e55.chunk.js",
+    "static/js/2.ff3c6e55.chunk.js.map": "/static/js/2.ff3c6e55.chunk.js.map",
+    "index.html": "/index.html",
+    "precache-manifest.2f0b3426be53946edc382485a3b69312.js": "/precache-manifest.2f0b3426be53946edc382485a3b69312.js",
+    "service-worker.js": "/service-worker.js",
+    "static/css/main.d2d13b94.chunk.css.map": "/static/css/main.d2d13b94.chunk.css.map",
+    "static/js/2.ff3c6e55.chunk.js.LICENSE": "/static/js/2.ff3c6e55.chunk.js.LICENSE",
+    "static/media/index.css": "/static/media/ARCADECLASSIC.96411199.TTF",
+    "static/media/frog.png": "/static/media/frog.d0763e0d.png",
+    "static/media/sos.png": "/static/media/sos.4984ccd6.png"
   },
   "entrypoints": [
-    "static/js/runtime-main.beb97a03.js",
-    "static/js/2.3ff48eab.chunk.js",
-    "static/css/main.df2f1330.chunk.css",
-    "static/js/main.60bae7da.chunk.js"
+    "static/js/runtime-main.6e67da31.js",
+    "static/js/2.ff3c6e55.chunk.js",
+    "static/css/main.d2d13b94.chunk.css",
+    "static/js/main.a41aeb3d.chunk.js"
   ]
 }

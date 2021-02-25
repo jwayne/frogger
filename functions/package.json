@@ -1,0 +1,19 @@
+{
+  "name": "frogger",
+  "version": "1.0.0",
+  "main": "app.js",
+  "license": "MIT",
+  "devDependencies": {
+    "@google-cloud/functions": "^1.1.2",
+    "@google-cloud/functions-framework": "^1.7.1"
+  },
+  "scripts": {
+    "start": "npx functions-framework --target=hello"
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "^4.9.4",
+    "bad-words": "^3.0.4",
+    "express": "^4.17.1",
+    "firebase-admin": "^9.5.0"
+  }
+}

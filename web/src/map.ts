@@ -84,7 +84,7 @@ export const initLane = (laneType: LaneType, gameWidth: number): LaneState => {
 export const initLanes = (mapType: MapType, gameWidth: number) => {
   let laneTypes: LaneType[];
   switch (mapType) {
-    case "CLASSIC":
+    case "classic":
       laneTypes = [
         LaneType.GRASS,
         LaneType.WATER,
@@ -101,7 +101,7 @@ export const initLanes = (mapType: MapType, gameWidth: number) => {
         LaneType.GRASS
       ];
       break;
-    case "LOS ANGELES":
+    case "los angeles":
       laneTypes = [
         LaneType.GRASS,
         LaneType.ROAD,
@@ -118,7 +118,7 @@ export const initLanes = (mapType: MapType, gameWidth: number) => {
         LaneType.GRASS
       ];
       break;
-    case "VENICE":
+    case "venice":
       laneTypes = [
         LaneType.GRASS,
         LaneType.WATER,
@@ -135,7 +135,7 @@ export const initLanes = (mapType: MapType, gameWidth: number) => {
         LaneType.GRASS
       ];
       break;
-    case "EXPERT":
+    case "expert":
       laneTypes = [
         LaneType.GRASS,
         LaneType.WATER,

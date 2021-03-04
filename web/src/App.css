@@ -36,3 +36,94 @@
     transform: rotate(360deg);
   }
 }
+
+.overlay div,
+.overlay p {
+  text-align: center;
+  flex: 0 0 100%;
+  margin: 0 auto;
+}
+
+.overlay-title {
+  font-size: 2em;
+}
+.overlay-footer {
+  font-size: 0.95em;
+}
+
+div.high-scores-loading {
+  margin: 48px auto;
+  animation: blink 1s ease-in infinite;
+}
+@keyframes blink {
+  0%,
+  40% {
+    opacity: 0.8;
+  }
+  80% {
+    opacity: 0;
+  }
+}
+
+div.high-scores {
+  flex: 0 0 100%;
+  margin: 4px auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  overflow-y: auto;
+
+  animation: fade-in 0.7s ease-out 1;
+}
+@keyframes fade-in {
+  0% {opacity: 0;}
+  100% {opacity: 1;}
+}
+
+div.high-scores table {
+  margin: 8px 12px;
+  font-size: 0.67em;
+}
+.high-scores td {
+  padding: 6px 8px;
+  line-height: 95%;
+}
+.high-scores td.high-scores-name {
+  text-align: left;
+  word-wrap: break-word;
+}
+
+.new-score {
+  color: lightGreen;
+}
+.new-score form {
+  margin: 0;
+  padding: 0;
+  display: flex;
+}
+.new-score form input {
+  border: none;
+  background: transparent;
+  border-bottom: 2px solid lightGreen;
+  outline: none;
+  padding: 0;
+
+  font-family: "ArcadeClassic";
+  color: lightGreen;
+  font-size: inherit;
+}
+.new-score form button {
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  overflow: hidden;
+  outline: none;
+  cursor: pointer;
+  padding: 0 0 0 2px;
+
+  font-family: "ArcadeClassic";
+  color: lightGreen;
+  font-size: inherit;
+}

@@ -1,4 +1,4 @@
-const mapTypes = ["CLASSIC", "LOS ANGELES", "VENICE", "EXPERT"] as const;
+const mapTypes = ["classic", "los angeles", "venice", "expert"] as const;
 export type MapType = typeof mapTypes[number];
 
 export type LaneObjectData = {
@@ -92,12 +92,17 @@ export enum RoundStatus {
 export type GamePlayingState = {
   gameStatus: GameStatus.PLAYING;
   gameSize: GameSizeState;
+  /** Time this game started, in millis since 1970/01/01 */
+  gameStartTime: number;
+  /** Time this game was won, in millis since 1970/01/01 */
+  gameWinTime: number;
 
   mapType: MapType;
   frog: FrogState;
   lanes: LaneState[];
   /** Number of millis that have passed since game start. */
   time: number;
+  /** Whether we've won, lost, or are still playing the game */
   roundStatus: RoundStatus;
   /** Whether the frog has moved yet. For displaying an info message. */
   hasMoved: boolean;

@@ -1,49 +1,50 @@
-import React, { useEffect, useCallback, CSSProperties } from "react";
-import { Animate } from "react-move";
-import { useSelector, useDispatch } from "react-redux";
-import { Swipeable, EventData } from "react-swipeable";
-import styled from "styled-components";
-import "./App.css";
+import React, { useEffect, useCallback, useState, CSSProperties } from "react"
+import { Animate } from "react-move"
+import { useSelector, useDispatch } from "react-redux"
+import { Swipeable, EventData } from "react-swipeable"
+import styled from "styled-components"
+import "./App.css"
 import {
   LaneType,
   ReducerState,
   ActionType,
   GameStatus,
-  RoundStatus
-} from "./types";
-import { getLaneObjectData } from "./store";
-import { initFrog } from "./map";
+  RoundStatus,
+  GamePlayingState,
+} from "./types"
+import { getLaneObjectData } from "./store"
+import { initFrog } from "./map"
 
-const refreshInterval = 20; // 20ms refresh = 50 fps
-const frogMoveDuration = 65;
-const delayBeforeOverlay = 90;
-const delayBeforeInput = 250; // average human response time to visual stimulus
+const refreshInterval = 20 // 20ms refresh = 50 fps
+const frogMoveDuration = 65
+const delayBeforeOverlay = 90
+const delayBeforeInput = 250 // average human response time to visual stimulus
 
 const App: React.FC = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch()
 
   useEffect(() => {
     dispatch({
       type: ActionType.SCREEN_RESIZE,
       windowWidth: window.innerWidth,
       windowHeight: window.innerHeight,
-      isMobile: "ontouchstart" in window || navigator.msMaxTouchPoints
-    });
-  }, [dispatch]);
+      isMobile: "ontouchstart" in window || navigator.msMaxTouchPoints,
+    })
+  }, [dispatch])
 
   let { gameStatus, loadingFailed } = useSelector((state: ReducerState) => {
     return {
       gameStatus: state.gameStatus,
       loadingFailed:
-        state.gameStatus === GameStatus.LOADING && state.loadingFailed
-    };
-  });
+        state.gameStatus === GameStatus.LOADING && state.loadingFailed,
+    }
+  })
   let fontSize = useSelector((state: ReducerState) => {
     if (state.gameStatus === GameStatus.LOADING) {
-      return "100%";
+      return "100%"
     }
-    return state.gameSize.frogSize;
-  });
+    return state.gameSize.frogSize
+  })
   return (
     <div
       style={{
@@ -52,45 +53,45 @@ const App: React.FC = () => {
         alignItems: "center",
         height: window.innerHeight,
         overflow: "hidden",
-        fontSize: fontSize
+        fontSize: fontSize,
       }}
     >
       {(() => {
         switch (gameStatus) {
           case GameStatus.LOADING:
             if (loadingFailed) {
-              return <div>Oops! Your screen is too small for this game.</div>;
+              return <div>Oops! Your screen is too small for this game.</div>
             } else {
-              return "";
+              return ""
             }
           case GameStatus.MAIN_MENU:
-            return <MainMenu />;
+            return <MainMenu />
           case GameStatus.PLAYING:
-            return <Game />;
+            return <Game />
         }
       })()}
     </div>
-  );
-};
+  )
+}
 
 type GameStartButtonProps = {
-  mapType: string;
-  isMobile: boolean;
-  style?: CSSProperties;
-};
+  mapType: string
+  isMobile: boolean
+  style?: CSSProperties
+}
 
 const StartButton = styled.div`
   &:hover {
     background-color: #aaa;
     border: 4px solid green;
   }
-`;
+`
 const GameStartButton: React.FC<GameStartButtonProps> = ({
   mapType,
   isMobile,
-  style
+  style,
 }) => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch()
 
   return (
     <StartButton
@@ -105,7 +106,7 @@ const GameStartButton: React.FC<GameStartButtonProps> = ({
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        ...style
+        ...style,
       }}
       className="start-button"
       onClick={() =>
@@ -114,18 +115,18 @@ const GameStartButton: React.FC<GameStartButtonProps> = ({
     >
       <div style={{ textAlign: "center" }}>{mapType}</div>
     </StartButton>
-  );
-};
+  )
+}
 
 const MainMenu: React.FC = () => {
   const { gameWidth, gameHeight, laneHeight, isMobile } = useSelector(
     (state: ReducerState) => {
       if (state.gameStatus !== GameStatus.MAIN_MENU) {
-        throw new Error("Bad game status: " + state.gameStatus);
+        throw new Error("Bad game status: " + state.gameStatus)
       }
-      return state.gameSize;
+      return state.gameSize
     }
-  );
+  )
 
   return (
     <div
@@ -137,7 +138,7 @@ const MainMenu: React.FC = () => {
         flexWrap: "wrap",
         justifyContent: "space-evenly",
         alignItems: "center",
-        alignContent: "center"
+        alignContent: "center",
       }}
     >
       <div
@@ -148,46 +149,46 @@ const MainMenu: React.FC = () => {
           color: "green",
           display: "flex",
           justifyContent: "center",
-          alignItems: "center"
+          alignItems: "center",
         }}
       >
         <div>Frogger</div>
       </div>
-      <GameStartButton mapType="CLASSIC" isMobile={isMobile} key={0} />
+      <GameStartButton mapType="classic" isMobile={isMobile} key={0} />
       <GameStartButton
-        mapType="LOS ANGELES"
+        mapType="los angeles"
         isMobile={isMobile}
         key={1}
         style={{
           backgroundImage: `url(${require("./assets/asphalt.png")})`,
           backgroundRepeat: "repeat-x repeat-y",
-          backgroundSize: `${laneHeight}px ${laneHeight}px`
+          backgroundSize: `${laneHeight}px ${laneHeight}px`,
         }}
       />
       <GameStartButton
-        mapType="VENICE"
+        mapType="venice"
         isMobile={isMobile}
         key={2}
         style={{
           backgroundImage: `url(${require("./assets/water.png")})`,
           backgroundRepeat: "repeat-x repeat-y",
-          backgroundSize: `${laneHeight}px ${laneHeight}px`
+          backgroundSize: `${laneHeight}px ${laneHeight}px`,
         }}
       />
       <GameStartButton
-        mapType="EXPERT"
+        mapType="expert"
         isMobile={isMobile}
         key={3}
         style={{
           backgroundImage: `url(${require("./assets/sos.png")})`,
           backgroundPosition: "center",
           backgroundRepeat: "repeat-x repeat-y",
-          backgroundSize: `${laneHeight * 2}px ${laneHeight * 2}px`
+          backgroundSize: `${laneHeight * 2}px ${laneHeight * 2}px`,
         }}
       />
     </div>
-  );
-};
+  )
+}
 
 const Game: React.FC = () => {
   const {
@@ -196,10 +197,10 @@ const Game: React.FC = () => {
     lanes,
     roundStatus,
     readyForOverlay,
-    readyForInput
+    readyForInput,
   } = useSelector((state: ReducerState) => {
     if (state.gameStatus !== GameStatus.PLAYING) {
-      throw new Error("Bad game status: " + state.gameStatus);
+      throw new Error("Bad game status: " + state.gameStatus)
     }
     return {
       gameSize: state.gameSize,
@@ -207,45 +208,45 @@ const Game: React.FC = () => {
       lanes: state.lanes,
       roundStatus: state.roundStatus,
       readyForOverlay: state.readyForOverlay,
-      readyForInput: state.readyForInput
-    };
-  });
-  const { gameWidth, gameHeight, laneHeight, lanePadding, frogSize } = gameSize;
+      readyForInput: state.readyForInput,
+    }
+  })
+  const { gameWidth, gameHeight, laneHeight, lanePadding, frogSize } = gameSize
 
-  const dispatch = useDispatch();
+  const dispatch = useDispatch()
   const moveFrogOnKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      switch (e.key) {
+    (ev: KeyboardEvent) => {
+      switch (ev.key) {
         case "ArrowUp":
         case "ArrowDown":
         case "ArrowLeft":
         case "ArrowRight":
           dispatch({
             type: ActionType.FROG_MOVE,
-            dir: e.key.substring(5)
-          });
+            dir: ev.key.substring(5),
+          })
       }
     },
     [dispatch]
-  );
+  )
 
   useEffect(() => {
-    document.addEventListener("keydown", moveFrogOnKeyDown);
+    document.addEventListener("keydown", moveFrogOnKeyDown)
     return () => {
-      document.removeEventListener("keydown", moveFrogOnKeyDown);
-    };
-  });
+      document.removeEventListener("keydown", moveFrogOnKeyDown)
+    }
+  }, [moveFrogOnKeyDown])
 
   useEffect(() => {
     const tick = setInterval(() => {
-      dispatch({ type: ActionType.TICK, tickAmount: refreshInterval });
-    }, refreshInterval);
+      dispatch({ type: ActionType.TICK, tickAmount: refreshInterval })
+    }, refreshInterval)
     return () => {
       if (tick !== undefined) {
-        clearInterval(tick);
+        clearInterval(tick)
       }
-    };
-  }, [dispatch]);
+    }
+  }, [dispatch])
 
   useEffect(() => {
     // NOTE: This can create issues if we advance to another state before
@@ -255,23 +256,23 @@ const Game: React.FC = () => {
     // advance to a different state until readyForInput is true.
     if (!readyForInput) {
       setTimeout(() => {
-        dispatch({ type: ActionType.READY_FOR_INPUT });
-      }, delayBeforeInput);
+        dispatch({ type: ActionType.READY_FOR_INPUT })
+      }, delayBeforeInput)
     }
-  }, [readyForInput, dispatch]);
+  }, [readyForInput, dispatch])
   useEffect(() => {
     if (
       !readyForOverlay &&
       (roundStatus === RoundStatus.DEAD || roundStatus === RoundStatus.WON)
     ) {
       setTimeout(() => {
-        dispatch({ type: ActionType.READY_FOR_OVERLAY });
-      }, delayBeforeOverlay);
+        dispatch({ type: ActionType.READY_FOR_OVERLAY })
+      }, delayBeforeOverlay)
     }
-  }, [readyForOverlay, roundStatus, dispatch]);
+  }, [readyForOverlay, roundStatus, dispatch])
 
-  let initialFrog = initFrog(gameWidth, frogSize);
-  let frogImg;
+  let initialFrog = initFrog(gameWidth, frogSize)
+  let frogImg
   if (!readyForOverlay) {
     frogImg = (
       <img
@@ -280,10 +281,10 @@ const Game: React.FC = () => {
         style={{
           transform: `rotate(${frog.direction}deg)`,
           width: frogSize,
-          height: frogSize
+          height: frogSize,
         }}
       />
-    );
+    )
   } else if (roundStatus === RoundStatus.DEAD) {
     frogImg = (
       <img
@@ -291,10 +292,10 @@ const Game: React.FC = () => {
         alt="dead"
         style={{
           width: frogSize,
-          height: frogSize
+          height: frogSize,
         }}
       />
-    );
+    )
   } else if (roundStatus === RoundStatus.WON) {
     frogImg = (
       <img
@@ -302,18 +303,18 @@ const Game: React.FC = () => {
         alt="dead"
         style={{
           width: frogSize,
-          height: frogSize
+          height: frogSize,
         }}
       />
-    );
+    )
   } else {
-    throw new Error("should not get here");
+    throw new Error("should not get here")
   }
 
   return (
     <Swipeable
       onSwiped={(e: EventData) => {
-        dispatch({ type: ActionType.FROG_MOVE, dir: e.dir });
+        dispatch({ type: ActionType.FROG_MOVE, dir: e.dir })
       }}
     >
       <div
@@ -322,10 +323,12 @@ const Game: React.FC = () => {
           height: gameHeight,
           backgroundColor: "lightGrey",
           overflow: "hidden",
-          position: "relative"
+          position: "relative",
         }}
-        onMouseDown={e => {
-          e.preventDefault();
+        onMouseDown={(e: React.MouseEvent<HTMLElement>) => {
+          if ((e.target as HTMLInputElement).className !== "allow-click") {
+            e.preventDefault()
+          }
         }}
       >
         <Frog
@@ -337,6 +340,7 @@ const Game: React.FC = () => {
         >
           {frogImg}
         </Frog>
+        <Timer />
         {lanes.map((lane, i) => {
           switch (lane.laneType) {
             case LaneType.GRASS:
@@ -347,7 +351,7 @@ const Game: React.FC = () => {
                   laneHeight={laneHeight}
                   lanePadding={lanePadding}
                 />
-              );
+              )
             case LaneType.ROAD:
             case LaneType.WATER:
               return (
@@ -358,29 +362,29 @@ const Game: React.FC = () => {
                   lanePadding={lanePadding}
                   laneNumber={i}
                 />
-              );
+              )
             default:
-              throw new Error("shouldn't get here");
+              throw new Error("shouldn't get here")
           }
         })}
         {readyForOverlay && roundStatus === RoundStatus.DEAD && (
-          <DeadGameOverlay />
+          <LostGameOverlay />
         )}
         {readyForOverlay && roundStatus === RoundStatus.WON && (
           <WonGameOverlay />
         )}
       </div>
     </Swipeable>
-  );
-};
+  )
+}
 
 type FrogProps = {
-  x: number;
-  y: number;
-  startX: number;
-  startY: number;
-  frogSize: number;
-};
+  x: number
+  y: number
+  startX: number
+  startY: number
+  frogSize: number
+}
 
 const Frog: React.FC<FrogProps> = ({
   x,
@@ -388,23 +392,23 @@ const Frog: React.FC<FrogProps> = ({
   startX,
   startY,
   frogSize,
-  children
+  children,
 }) => (
   <Animate
     start={{
       moveX: 0,
-      moveY: 0
+      moveY: 0,
     }}
     update={{
       moveX: [x - startX],
       moveY: [y - startY],
       timing: {
         delay: 0,
-        duration: frogMoveDuration
-      }
+        duration: frogMoveDuration,
+      },
     }}
   >
-    {data => (
+    {(data) => (
       <div
         style={{
           transform: `translate(${data.moveX}px, ${data.moveY}px)`,
@@ -413,45 +417,107 @@ const Frog: React.FC<FrogProps> = ({
           top: startY,
           width: frogSize,
           height: frogSize,
-          zIndex: 3
+          zIndex: 3,
         }}
       >
         {children}
       </div>
     )}
   </Animate>
-);
+)
+
+function zfill(num: number) {
+  let numStr = num.toString()
+  if (numStr.length < 2) {
+    numStr = "0" + numStr
+  }
+  return numStr
+}
+
+function formatMillis(millis: number) {
+  const minutes = Math.floor((millis / (1000 * 60)) % 60)
+  const seconds = Math.floor((millis / 1000) % 60)
+  const splitSeconds = Math.floor((millis / 10) % 100)
+  return zfill(minutes) + ":" + zfill(seconds) + "." + zfill(splitSeconds)
+}
+
+const Timer: React.FC = () => {
+  let { gameStartTime, gameWinTime } = useSelector(
+    (state: GamePlayingState) => {
+      return {
+        gameStartTime: state.gameStartTime,
+        gameWinTime: state.gameWinTime,
+      }
+    }
+  )
+
+  const [timeElapsed, setTimeElapsed] = useState(0)
+
+  // Update the timer unless it exceeds 1 hour.
+  useEffect(() => {
+    if (timeElapsed < 3599999) {
+      const timeout = setTimeout(() => {
+        if (gameWinTime) {
+          setTimeElapsed(gameWinTime - gameStartTime)
+        } else {
+          setTimeElapsed(
+            Math.min(new Date().getTime() - gameStartTime, 3599999)
+          )
+        }
+      }, 25)
+      return () => {
+        clearTimeout(timeout)
+      }
+    }
+    // This will stop updating once timeElapsed stops changing.
+  }, [timeElapsed, gameStartTime, gameWinTime])
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        right: "5px",
+        top: 0,
+        zIndex: 2,
+        fontSize: "80%",
+        color: "#003300",
+      }}
+    >
+      {formatMillis(timeElapsed)}
+    </div>
+  )
+}
 
 type LaneProps = {
-  laneType: LaneType;
-  laneHeight: number;
-  lanePadding: number;
-};
+  laneType: LaneType
+  laneHeight: number
+  lanePadding: number
+}
 
 const Lane: React.FC<LaneProps> = ({
   laneType,
   laneHeight,
   lanePadding,
-  children
+  children,
 }) => {
-  let style;
+  let style
   switch (laneType) {
     case LaneType.GRASS:
-      style = { backgroundColor: "green" };
-      break;
+      style = { backgroundColor: "green" }
+      break
     case LaneType.ROAD:
       style = {
         backgroundImage: `url(${require("./assets/asphalt.png")})`,
         backgroundRepeat: "repeat-x",
-        backgroundSize: `${laneHeight}px ${laneHeight}px`
-      };
-      break;
+        backgroundSize: `${laneHeight}px ${laneHeight}px`,
+      }
+      break
     case LaneType.WATER:
       style = {
         backgroundImage: `url(${require("./assets/water.png")})`,
         backgroundRepeat: "repeat-x",
-        backgroundSize: `${laneHeight}px ${laneHeight}px`
-      };
+        backgroundSize: `${laneHeight}px ${laneHeight}px`,
+      }
   }
   return (
     <div
@@ -461,27 +527,27 @@ const Lane: React.FC<LaneProps> = ({
         width: "100%",
         padding: `${lanePadding}px 0`,
         overflow: "hidden",
-        position: "relative"
+        position: "relative",
       }}
     >
       {children}
     </div>
-  );
-};
+  )
+}
 
 type MovingLaneProps = LaneProps & {
-  laneNumber: number;
-};
+  laneNumber: number
+}
 
 const MovingLane: React.FC<MovingLaneProps> = ({ laneNumber, ...props }) => {
-  const { laneHeight, lanePadding } = props;
+  const { laneHeight, lanePadding } = props
   let laneObjectData = useSelector((state: ReducerState) =>
     getLaneObjectData(state, laneNumber)
-  );
+  )
 
   return (
     <Lane {...props}>
-      {laneObjectData.map(laneObject => (
+      {laneObjectData.map((laneObject) => (
         <div
           style={{
             position: "absolute",
@@ -489,138 +555,22 @@ const MovingLane: React.FC<MovingLaneProps> = ({ laneNumber, ...props }) => {
             width: laneObject.length,
             height: laneHeight - lanePadding * 2,
             backgroundColor: laneObject.color,
-            zIndex: 1
+            zIndex: 1,
           }}
           key={laneObject.id}
         ></div>
       ))}
     </Lane>
-  );
-};
-
-const DeadGameOverlay: React.FC = () => {
-  const { isMobile, mapType } = useSelector((state: ReducerState) => {
-    if (state.gameStatus !== GameStatus.PLAYING) {
-      throw new Error("Bad game status: " + state.gameStatus);
-    }
-    return { isMobile: state.gameSize.isMobile, mapType: state.mapType };
-  });
-  const dispatch = useDispatch();
-
-  const onKeyDown = useCallback(
-    (ev: KeyboardEvent) => {
-      if (ev.key === "Escape") {
-        dispatch({ type: ActionType.RETURN_TO_MAIN_MENU });
-      } else {
-        dispatch({ type: ActionType.START_GAME, mapType: mapType });
-      }
-    },
-    [mapType, dispatch]
-  );
-  useEffect(() => {
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  });
-
-  if (isMobile) {
-    return (
-      <Swipeable
-        onSwiped={(e: EventData) => {
-          dispatch({ type: ActionType.RETURN_TO_MAIN_MENU });
-        }}
-      >
-        <GameOverlayDiv
-          onClick={(event: React.MouseEvent) => {
-            dispatch({ type: ActionType.START_GAME, mapType: mapType });
-          }}
-        >
-          <div style={{ textAlign: "center", width: "100%", fontSize: "200%" }}>
-            YOU&nbsp;&nbsp;DIED
-          </div>
-          <div style={{ textAlign: "center", width: "100%" }}>
-            [Tap] to restart
-            <br />
-            [Swipe] for main menu
-          </div>
-        </GameOverlayDiv>
-      </Swipeable>
-    );
-  } else {
-    return (
-      <GameOverlayDiv>
-        <div style={{ textAlign: "center", width: "100%", fontSize: "200%" }}>
-          YOU&nbsp;&nbsp;DIED
-        </div>
-        <div style={{ textAlign: "center", width: "100%" }}>
-          [any key] to&nbsp;&nbsp;restart
-          <br />
-          [esc] for main menu
-        </div>
-      </GameOverlayDiv>
-    );
-  }
-};
-
-const WonGameOverlay: React.FC = () => {
-  const isMobile = useSelector((state: ReducerState) => {
-    if (state.gameStatus !== GameStatus.PLAYING) {
-      throw new Error("Bad game status: " + state.gameStatus);
-    }
-    return state.gameSize.isMobile;
-  });
-  const dispatch = useDispatch();
-
-  const onKeyDown = useCallback(
-    (ev: KeyboardEvent) => {
-      dispatch({ type: ActionType.RETURN_TO_MAIN_MENU });
-    },
-    [dispatch]
-  );
-  useEffect(() => {
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  });
-
-  if (isMobile) {
-    return (
-      <GameOverlayDiv
-        onClick={(event: React.MouseEvent) => {
-          dispatch({ type: ActionType.RETURN_TO_MAIN_MENU });
-        }}
-      >
-        <div style={{ textAlign: "center", width: "100%", fontSize: "200%" }}>
-          YOU&nbsp;&nbsp;WIN
-        </div>
-        <div style={{ textAlign: "center", width: "100%" }}>
-          [Tap] for main menu
-        </div>
-      </GameOverlayDiv>
-    );
-  } else {
-    return (
-      <GameOverlayDiv>
-        <div style={{ textAlign: "center", width: "100%", fontSize: "200%" }}>
-          YOU&nbsp;&nbsp;WIN
-        </div>
-        <div style={{ textAlign: "center", width: "100%" }}>
-          [any key] for main menu
-        </div>
-      </GameOverlayDiv>
-    );
-  }
-};
+  )
+}
 
 type GameOverlayDivProps = {
-  onClick?: (event: React.MouseEvent) => void;
-};
+  onClick?: (event: React.MouseEvent) => void
+}
 
 const GameOverlayDiv: React.FC<GameOverlayDivProps> = ({
   onClick,
-  children
+  children,
 }) => {
   return (
     <div
@@ -636,12 +586,283 @@ const GameOverlayDiv: React.FC<GameOverlayDivProps> = ({
         backgroundColor: "#aaa",
         display: "flex",
         flexWrap: "wrap",
-        alignContent: "center"
+        alignContent: "center",
       }}
+      className="overlay"
     >
       {children}
     </div>
-  );
-};
+  )
+}
+const LostGameOverlay: React.FC = () => {
+  const { isMobile, mapType } = useSelector((state: ReducerState) => {
+    if (state.gameStatus !== GameStatus.PLAYING) {
+      throw new Error("Bad game status: " + state.gameStatus)
+    }
+    return { isMobile: state.gameSize.isMobile, mapType: state.mapType }
+  })
+  const dispatch = useDispatch()
 
-export default App;
+  const onKeyDown = useCallback(
+    (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") {
+        dispatch({ type: ActionType.RETURN_TO_MAIN_MENU })
+      } else {
+        dispatch({ type: ActionType.START_GAME, mapType: mapType })
+      }
+    },
+    [mapType, dispatch]
+  )
+  useEffect(() => {
+    document.addEventListener("keydown", onKeyDown)
+    return () => {
+      document.removeEventListener("keydown", onKeyDown)
+    }
+  }, [onKeyDown])
+
+  if (isMobile) {
+    return (
+      <Swipeable
+        onSwiped={(e: EventData) => {
+          dispatch({ type: ActionType.RETURN_TO_MAIN_MENU })
+        }}
+      >
+        <GameOverlayDiv
+          onClick={(event: React.MouseEvent) => {
+            dispatch({ type: ActionType.START_GAME, mapType: mapType })
+          }}
+        >
+          <div className="overlay-title">YOU&nbsp;&nbsp;DIED</div>
+          <div className="overlay-footer">
+            [Tap] to restart
+            <br />
+            [Swipe] for main menu
+          </div>
+        </GameOverlayDiv>
+      </Swipeable>
+    )
+  } else {
+    return (
+      <GameOverlayDiv>
+        <div className="overlay-title">YOU&nbsp;&nbsp;DIED</div>
+        <div className="overlay-footer">
+          [any key] to&nbsp;&nbsp;restart
+          <br />
+          [esc] for main menu
+        </div>
+      </GameOverlayDiv>
+    )
+  }
+}
+
+const WonGameOverlay: React.FC = () => {
+  const isMobile = useSelector((state: ReducerState) => {
+    if (state.gameStatus !== GameStatus.PLAYING) {
+      throw new Error("Bad game status: " + state.gameStatus)
+    }
+    return state.gameSize.isMobile
+  })
+  const dispatch = useDispatch()
+
+  const onKeyDown = useCallback(
+    (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") {
+        dispatch({ type: ActionType.RETURN_TO_MAIN_MENU })
+      }
+    },
+    [dispatch]
+  )
+  useEffect(() => {
+    document.addEventListener("keydown", onKeyDown)
+    return () => {
+      document.removeEventListener("keydown", onKeyDown)
+    }
+  }, [onKeyDown])
+
+  if (isMobile) {
+    return (
+      <Swipeable
+        onSwiped={(e: EventData) => {
+          dispatch({ type: ActionType.RETURN_TO_MAIN_MENU })
+        }}
+      >
+        <GameOverlayDiv>
+          <div className="overlay-title">YOU&nbsp;&nbsp;WIN</div>
+          <HighScoresTable />
+          <div className="overlay-footer">[Swipe] for main menu</div>
+        </GameOverlayDiv>
+      </Swipeable>
+    )
+  } else {
+    return (
+      <GameOverlayDiv>
+        <div className="overlay-title">YOU&nbsp;&nbsp;WIN</div>
+        <HighScoresTable />
+        <div className="overlay-footer">[esc] for main menu</div>
+      </GameOverlayDiv>
+    )
+  }
+}
+
+const HIGH_SCORES_URL = "http://localhost:8080/scores"
+
+const MAX_SCORES_TO_SHOW = 5
+
+type HighScoresRow = {
+  name: string
+  finishTimeMs: number
+}
+
+const HighScoresTable: React.FC = () => {
+  let { mapType, finishTimeMs } = useSelector((state: GamePlayingState) => {
+    return {
+      mapType: state.mapType,
+      // Should be NaN if we haven't won the game yet
+      finishTimeMs: state.gameWinTime - state.gameStartTime,
+    }
+  })
+
+  // Display a loading message if the high scores haven't loaded yet
+  const [hasLoaded, setHasLoaded] = useState(false)
+
+  // Get the latest high scores
+  const [highScores, setHighScores] = useState<HighScoresRow[]>([])
+  useEffect(() => {
+    async function fetchData() {
+      let response, data
+      console.log("Fetching high scores for: " + mapType)
+      try {
+        response = await fetch(
+          `${HIGH_SCORES_URL}?mapType=${mapType}&count=${MAX_SCORES_TO_SHOW}`
+        )
+        data = await response.json()
+        if (!response.ok) {
+          throw Error(`HTTP ${response.status} ${data.message}`)
+        }
+      } catch (error) {
+        console.log("Could not load high scores: " + error)
+        return
+      }
+      setHighScores(data)
+      setHasLoaded(true)
+    }
+    fetchData()
+  }, [mapType])
+
+  // Set up the input field for submitting a new high score
+  const [newName, setNewName] = useState("")
+  const handleChange = useCallback(
+    (ev: React.ChangeEvent<HTMLInputElement>) => {
+      setNewName(ev.target.value)
+    },
+    [setNewName]
+  )
+  const handleSubmit = useCallback(
+    (ev: React.FormEvent<HTMLFormElement>) => {
+      ev.preventDefault()
+
+      const requestOptions = {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mapType: mapType,
+          finishTimeMs: finishTimeMs,
+          name: newName,
+        }),
+      }
+      fetch(HIGH_SCORES_URL, requestOptions)
+        .then((response) => response.json())
+        .then((data) => data.id)
+    },
+    [mapType, finishTimeMs, newName]
+  )
+
+  // for testing
+  finishTimeMs = 0
+
+  // Assemble our high scores table while checking if we got a new high score.
+  const highScoreRows: JSX.Element[] = []
+  let rank = 0
+  let gotNewHighScore = false
+  highScores.map((row) => {
+    if (!gotNewHighScore && finishTimeMs < row.finishTimeMs) {
+      rank++
+      highScoreRows.push(
+        <tr key={rank} className="new-score">
+          <td>{rank}</td>
+          <td className="high-scores-name" id="new-score-name">
+            <form onSubmit={handleSubmit}>
+              <input
+                type="text"
+                value={newName}
+                onChange={handleChange}
+                className="allow-click"
+                size={10}
+                maxLength={12}
+                placeholder="YOUR NAME"
+              />
+              <button type="submit" className="allow-click">
+                &#8594;
+              </button>
+            </form>
+          </td>
+          <td>{formatMillis(finishTimeMs)}</td>
+        </tr>
+      )
+      gotNewHighScore = true
+    }
+
+    rank++
+    if (rank <= MAX_SCORES_TO_SHOW) {
+      highScoreRows.push(
+        <tr key={rank}>
+          <td>{rank}</td>
+          <td className="high-scores-name">{row.name}</td>
+          <td>{formatMillis(row.finishTimeMs)}</td>
+        </tr>
+      )
+    }
+  })
+
+  if (!hasLoaded) {
+    return (
+      <div className="high-scores-loading">
+        LOADING
+        <br />
+        HIGH SCORES
+      </div>
+    )
+  } else {
+    return (
+      <div className="high-scores">
+        {gotNewHighScore ? (
+          <p style={{ color: "lightGreen" }}>
+            NEW HIGH SCORE
+            <br />
+            CONGRATS!
+          </p>
+        ) : highScoreRows.length ? (
+          <p>HIGH SCORES</p>
+        ) : (
+          <>
+            <p style={{marginBottom: "8px"}}>
+              NO HIGH
+              <br />
+              SCORES YET...
+            </p>
+            <p>
+              You could be
+              <br />
+              the first!
+            </p>
+          </>
+        )}
+        <table>
+          <tbody>{highScoreRows}</tbody>
+        </table>
+      </div>
+    )
+  }
+}
+
+export default App

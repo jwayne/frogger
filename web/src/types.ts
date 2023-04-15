@@ -22,7 +22,7 @@ export type GameSizeState = {
 export type FrogState = {
   /** Horizontal position of frog as # pixels to the frog's left boundary */
   x: number;
-  /** Vertical position of frog in as lane number, from top (0) to bottom */
+  /** Vertical position of frog as lane number, from top (0) to bottom */
   lane: number;
   /** Direction frog is facing, in css degrees */
   direction: number;
@@ -31,7 +31,7 @@ export type FrogState = {
 export enum LaneType {
   GRASS,
   ROAD,
-  WATER
+  WATER,
 }
 
 export type StaticLaneState = {
@@ -69,7 +69,7 @@ export type LaneState = StaticLaneState | MovingLaneState;
 export enum GameStatus {
   LOADING,
   MAIN_MENU,
-  PLAYING
+  PLAYING,
 }
 
 export type GameLoadingState = {
@@ -86,7 +86,7 @@ export type GameMainMenuState = {
 export enum RoundStatus {
   ALIVE,
   DEAD,
-  WON
+  WON,
 }
 
 export type GamePlayingState = {
@@ -133,7 +133,7 @@ export enum ActionType {
   TICK,
   READY_FOR_OVERLAY,
   READY_FOR_INPUT,
-  RETURN_TO_MAIN_MENU
+  RETURN_TO_MAIN_MENU,
 }
 
 export type ScreenResizeAction = {

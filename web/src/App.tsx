@@ -1,4 +1,10 @@
-import React, { useEffect, useCallback, useState, CSSProperties } from "react"
+import React, {
+  useEffect,
+  useCallback,
+  useState,
+  CSSProperties,
+  useRef,
+} from "react"
 import { Animate } from "react-move"
 import { useSelector, useDispatch } from "react-redux"
 import { Swipeable, EventData } from "react-swipeable"
@@ -28,7 +34,10 @@ const App: React.FC = () => {
       type: ActionType.SCREEN_RESIZE,
       windowWidth: window.innerWidth,
       windowHeight: window.innerHeight,
-      isMobile: "ontouchstart" in window || navigator.msMaxTouchPoints,
+      isMobile:
+        "ontouchstart" in window ||
+        navigator.maxTouchPoints > 0 ||
+        navigator.msMaxTouchPoints > 0,
     })
   }, [dispatch])
 
@@ -198,6 +207,7 @@ const Game: React.FC = () => {
     roundStatus,
     readyForOverlay,
     readyForInput,
+    isMobile,
   } = useSelector((state: ReducerState) => {
     if (state.gameStatus !== GameStatus.PLAYING) {
       throw new Error("Bad game status: " + state.gameStatus)
@@ -209,11 +219,14 @@ const Game: React.FC = () => {
       roundStatus: state.roundStatus,
       readyForOverlay: state.readyForOverlay,
       readyForInput: state.readyForInput,
+      isMobile: state.gameSize.isMobile,
     }
   })
   const { gameWidth, gameHeight, laneHeight, lanePadding, frogSize } = gameSize
 
   const dispatch = useDispatch()
+  const container = useRef<HTMLDivElement>(null)
+
   const moveFrogOnKeyDown = useCallback(
     (ev: KeyboardEvent) => {
       switch (ev.key) {
@@ -229,7 +242,6 @@ const Game: React.FC = () => {
     },
     [dispatch]
   )
-
   useEffect(() => {
     document.addEventListener("keydown", moveFrogOnKeyDown)
     return () => {
@@ -311,75 +323,113 @@ const Game: React.FC = () => {
     throw new Error("should not get here")
   }
 
+  const frogY = frog.lane * laneHeight + lanePadding
+
   return (
-    <Swipeable
-      onSwiped={(e: EventData) => {
-        dispatch({ type: ActionType.FROG_MOVE, dir: e.dir })
+    <div
+      ref={container}
+      style={{
+        width: gameWidth,
+        height: gameHeight,
+        backgroundColor: "lightGrey",
+        overflow: "hidden",
+        position: "relative",
+      }}
+      onMouseDown={(e: React.MouseEvent<HTMLElement>) => {
+        if ((e.target as HTMLInputElement).className !== "allow-click") {
+          e.preventDefault()
+          // On mobile, support tapping to move the frog. Direction is determined by
+          // where the tap is relative to the frog. Tap within the 45 degrees around
+          // each cardinal direction to move in that direction.
+          if (isMobile && container.current) {
+            const halfFrog = frogSize / 2
+            const frogCenterX = frog.x + halfFrog
+            const frogCenterY = frogY + halfFrog
+
+            const rect = container.current.getBoundingClientRect()
+            const mouseX = e.clientX - rect.left
+            const mouseY = e.clientY - rect.top
+
+            const diffX = mouseX - frogCenterX
+            const diffY = mouseY - frogCenterY
+
+            if (Math.abs(diffY) > Math.abs(diffX)) {
+              if (diffY <= -halfFrog) {
+                dispatch({
+                  type: ActionType.FROG_MOVE,
+                  dir: "Up",
+                })
+              } else if (diffY >= halfFrog) {
+                dispatch({
+                  type: ActionType.FROG_MOVE,
+                  dir: "Down",
+                })
+              }
+            } else {
+              if (diffX <= -halfFrog) {
+                dispatch({
+                  type: ActionType.FROG_MOVE,
+                  dir: "Left",
+                })
+              } else if (diffX >= halfFrog) {
+                dispatch({
+                  type: ActionType.FROG_MOVE,
+                  dir: "Right",
+                })
+              }
+            }
+          }
+        }
       }}
     >
-      <div
-        style={{
-          width: gameWidth,
-          height: gameHeight,
-          backgroundColor: "lightGrey",
-          overflow: "hidden",
-          position: "relative",
-        }}
-        onMouseDown={(e: React.MouseEvent<HTMLElement>) => {
-          if ((e.target as HTMLInputElement).className !== "allow-click") {
-            e.preventDefault()
-          }
-        }}
+      <Frog
+        x={frog.x}
+        y={frogY}
+        startX={initialFrog.x}
+        startY={initialFrog.lane * laneHeight + lanePadding}
+        frogSize={frogSize}
       >
-        <Frog
-          x={frog.x}
-          y={frog.lane * laneHeight + lanePadding}
-          startX={initialFrog.x}
-          startY={initialFrog.lane * laneHeight + lanePadding}
-          frogSize={frogSize}
-        >
-          {frogImg}
-        </Frog>
-        <Timer />
-        {lanes.map((lane, i) => {
-          switch (lane.laneType) {
-            case LaneType.GRASS:
-              return (
-                <Lane
-                  key={i}
-                  laneType={lane.laneType}
-                  laneHeight={laneHeight}
-                  lanePadding={lanePadding}
-                />
-              )
-            case LaneType.ROAD:
-            case LaneType.WATER:
-              return (
-                <MovingLane
-                  key={i}
-                  laneType={lane.laneType}
-                  laneHeight={laneHeight}
-                  lanePadding={lanePadding}
-                  laneNumber={i}
-                />
-              )
-            default:
-              throw new Error("shouldn't get here")
-          }
-        })}
-        {readyForOverlay && roundStatus === RoundStatus.DEAD && (
-          <LostGameOverlay />
-        )}
-        {readyForOverlay && roundStatus === RoundStatus.WON && (
-          <WonGameOverlay />
-        )}
-      </div>
-    </Swipeable>
+        {frogImg}
+      </Frog>
+      <Timer />
+      {lanes.map((lane, i) => {
+        switch (lane.laneType) {
+          case LaneType.GRASS:
+            return (
+              <Lane
+                key={i}
+                laneType={lane.laneType}
+                laneHeight={laneHeight}
+                lanePadding={lanePadding}
+              />
+            )
+          case LaneType.ROAD:
+          case LaneType.WATER:
+            return (
+              <MovingLane
+                key={i}
+                laneType={lane.laneType}
+                laneHeight={laneHeight}
+                lanePadding={lanePadding}
+                laneNumber={i}
+              />
+            )
+          default:
+            throw new Error("shouldn't get here")
+        }
+      })}
+      {readyForOverlay && roundStatus === RoundStatus.DEAD && (
+        <LostGameOverlay />
+      )}
+      {readyForOverlay && roundStatus === RoundStatus.WON && <WonGameOverlay />}
+    </div>
   )
 }
 
 type FrogProps = {
+  // coordinate of frog's left boundary
   x: number
+  // coordinate of frog's top boundary
   y: number
   startX: number
   startY: number
@@ -607,7 +657,7 @@ const LostGameOverlay: React.FC = () => {
     (ev: KeyboardEvent) => {
       if (ev.key === "Escape") {
         dispatch({ type: ActionType.RETURN_TO_MAIN_MENU })
-      } else {
+      } else if (ev.key === " ") {
         dispatch({ type: ActionType.START_GAME, mapType: mapType })
       }
     },
@@ -624,19 +674,20 @@ const LostGameOverlay: React.FC = () => {
     return (
       <Swipeable
         onSwiped={(e: EventData) => {
-          dispatch({ type: ActionType.RETURN_TO_MAIN_MENU })
+          if (e.dir === "Up") {
+            dispatch({ type: ActionType.START_GAME, mapType: mapType })
+          } else if (e.dir === "Left") {
+            dispatch({ type: ActionType.RETURN_TO_MAIN_MENU })
+          }
         }}
       >
-        <GameOverlayDiv
-          onClick={(event: React.MouseEvent) => {
-            dispatch({ type: ActionType.START_GAME, mapType: mapType })
-          }}
-        >
-          <div className="overlay-title">YOU&nbsp;&nbsp;DIED</div>
+        <GameOverlayDiv>
+          <div className="overlay-title">YOU DIED</div>
+          <HighScoresTable />
           <div className="overlay-footer">
-            [Tap] to restart
+            [Swipe↑] to restart
             <br />
-            [Swipe] for main menu
+            [Swipe←] for main menu
           </div>
         </GameOverlayDiv>
       </Swipeable>
@@ -644,9 +695,10 @@ const LostGameOverlay: React.FC = () => {
   } else {
     return (
       <GameOverlayDiv>
-        <div className="overlay-title">YOU&nbsp;&nbsp;DIED</div>
+        <div className="overlay-title">YOU DIED</div>
+        <HighScoresTable />
         <div className="overlay-footer">
-          [any key] to&nbsp;&nbsp;restart
+          [space] to restart
           <br />
           [esc] for main menu
         </div>
@@ -845,7 +897,7 @@ const HighScoresTable: React.FC = () => {
           <p>HIGH SCORES</p>
         ) : (
           <>
-            <p style={{marginBottom: "8px"}}>
+            <p style={{ marginBottom: "8px" }}>
               NO HIGH
               <br />
               SCORES YET...

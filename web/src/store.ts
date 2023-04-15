@@ -159,7 +159,7 @@ const reduceStartGameEvent = (
     gameStatus: GameStatus.PLAYING,
     gameSize: state.gameSize,
     gameStartTime: new Date().getTime(),
-    gameWinTime: NaN,
+    gameEndTime: NaN,
 
     mapType: action.mapType,
     frog: initFrog(state.gameSize.gameWidth, state.gameSize.frogSize),
@@ -232,8 +232,9 @@ const reduceFrogMoveEvent = (
   }
   // check death
   newState.roundStatus = getRoundStatus(newState)
-  if (newState.roundStatus === RoundStatus.WON)
-    newState.gameWinTime = new Date().getTime()
+  if (newState.roundStatus !== RoundStatus.ALIVE) {
+    newState.gameEndTime = new Date().getTime()
+  }
   return newState
 }
 
@@ -283,7 +284,7 @@ const reduceReadyForInputEvent = (
   action: ReadyForInputAction
 ): ReducerState => {
   if (state.gameStatus !== GameStatus.PLAYING) {
-    return state;
+    return state
   }
   return { ...state, readyForInput: true }
 }

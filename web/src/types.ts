@@ -1,32 +1,32 @@
-const mapTypes = ["classic", "los angeles", "venice", "expert"] as const;
-export type MapType = typeof mapTypes[number];
+const mapTypes = ["classic", "los angeles", "venice", "expert"] as const
+export type MapType = typeof mapTypes[number]
 
 export type LaneObjectData = {
-  left: number;
-  length: number;
-  color: string;
-  id: number;
-};
+  left: number
+  length: number
+  color: string
+  id: number
+}
 
 /* redux states */
 
 export type GameSizeState = {
-  gameWidth: number;
-  gameHeight: number;
-  laneHeight: number;
-  lanePadding: number;
-  frogSize: number;
-  isMobile: boolean;
-};
+  gameWidth: number
+  gameHeight: number
+  laneHeight: number
+  lanePadding: number
+  frogSize: number
+  isMobile: boolean
+}
 
 export type FrogState = {
   /** Horizontal position of frog as # pixels to the frog's left boundary */
-  x: number;
+  x: number
   /** Vertical position of frog as lane number, from top (0) to bottom */
-  lane: number;
+  lane: number
   /** Direction frog is facing, in css degrees */
-  direction: number;
-};
+  direction: number
+}
 
 export enum LaneType {
   GRASS,
@@ -35,36 +35,36 @@ export enum LaneType {
 }
 
 export type StaticLaneState = {
-  laneType: LaneType.GRASS;
-};
+  laneType: LaneType.GRASS
+}
 
 export type LaneObjectState = {
   /** Starting coordinate of object */
-  startPos: number;
+  startPos: number
   /** Id of object, for referencing */
-  id: number;
+  id: number
   /** Color of object */
-  color: string;
-};
+  color: string
+}
 
 export type MovingLaneState = {
-  laneType: LaneType.ROAD | LaneType.WATER;
+  laneType: LaneType.ROAD | LaneType.WATER
 
   /** speed of objects in lane, in num pixels to move per ms */
-  speed: number;
+  speed: number
   /** direction of objects in lane. -1 = left, 1 = right */
-  direction: number;
+  direction: number
   /** length of objects in lane, in pixels */
-  length: number;
+  length: number
   /** min gap between objects in lane, in pixels */
-  minGap: number;
+  minGap: number
   /** max gap between objects in lane, in pixels */
-  maxGap: number;
+  maxGap: number
 
-  laneObjects: LaneObjectState[];
-};
+  laneObjects: LaneObjectState[]
+}
 
-export type LaneState = StaticLaneState | MovingLaneState;
+export type LaneState = StaticLaneState | MovingLaneState
 
 export enum GameStatus {
   LOADING,
@@ -73,15 +73,15 @@ export enum GameStatus {
 }
 
 export type GameLoadingState = {
-  gameStatus: GameStatus.LOADING;
+  gameStatus: GameStatus.LOADING
   /** whether the game can be loaded given the screen size. */
-  loadingFailed: boolean;
-};
+  loadingFailed: boolean
+}
 
 export type GameMainMenuState = {
-  gameStatus: GameStatus.MAIN_MENU;
-  gameSize: GameSizeState;
-};
+  gameStatus: GameStatus.MAIN_MENU
+  gameSize: GameSizeState
+}
 
 export enum RoundStatus {
   ALIVE,
@@ -90,39 +90,39 @@ export enum RoundStatus {
 }
 
 export type GamePlayingState = {
-  gameStatus: GameStatus.PLAYING;
-  gameSize: GameSizeState;
+  gameStatus: GameStatus.PLAYING
+  gameSize: GameSizeState
   /** Time this game started, in millis since 1970/01/01 */
-  gameStartTime: number;
-  /** Time this game was won, in millis since 1970/01/01 */
-  gameWinTime: number;
+  gameStartTime: number
+  /** Time this game ended, in millis since 1970/01/01 */
+  gameEndTime: number
 
-  mapType: MapType;
-  frog: FrogState;
-  lanes: LaneState[];
+  mapType: MapType
+  frog: FrogState
+  lanes: LaneState[]
   /** Number of millis that have passed since game start. */
-  time: number;
+  time: number
   /** Whether we've won, lost, or are still playing the game */
-  roundStatus: RoundStatus;
+  roundStatus: RoundStatus
   /** Whether the frog has moved yet. For displaying an info message. */
-  hasMoved: boolean;
+  hasMoved: boolean
   /** Whether we're ready to show the death/win screen yet. The idea being,
    * the win/lose event fires once the frog starts moving, but we don't want
    * to display the screen until the frog is done moving.
    */
-  readyForOverlay: boolean;
+  readyForOverlay: boolean
   /** Whether we're ready to handle keyboard input yet. The idea being,
    * when we transition states, we want to give the user a little time to
    * view the new state before their keyboard input is active, so that if
    * they're spamming a key, they don't trigger an action unintentionally.
    */
-  readyForInput: boolean;
-};
+  readyForInput: boolean
+}
 
 export type ReducerState =
   | GameLoadingState
   | GameMainMenuState
-  | GamePlayingState;
+  | GamePlayingState
 
 /* redux actions */
 
@@ -137,38 +137,38 @@ export enum ActionType {
 }
 
 export type ScreenResizeAction = {
-  type: ActionType.SCREEN_RESIZE;
-  windowWidth: number;
-  windowHeight: number;
-  isMobile: boolean;
-};
+  type: ActionType.SCREEN_RESIZE
+  windowWidth: number
+  windowHeight: number
+  isMobile: boolean
+}
 
 export type StartGameAction = {
-  type: ActionType.START_GAME;
-  mapType: MapType;
-};
+  type: ActionType.START_GAME
+  mapType: MapType
+}
 
 export type FrogMoveAction = {
-  type: ActionType.FROG_MOVE;
-  dir: "Up" | "Down" | "Left" | "Right";
-};
+  type: ActionType.FROG_MOVE
+  dir: "Up" | "Down" | "Left" | "Right"
+}
 
 export type TickEventAction = {
-  type: ActionType.TICK;
-  tickAmount: number;
-};
+  type: ActionType.TICK
+  tickAmount: number
+}
 
 export type ReadyForOverlayAction = {
-  type: ActionType.READY_FOR_OVERLAY;
-};
+  type: ActionType.READY_FOR_OVERLAY
+}
 
 export type ReadyForInputAction = {
-  type: ActionType.READY_FOR_INPUT;
-};
+  type: ActionType.READY_FOR_INPUT
+}
 
 export type ReturnToMainMenuAction = {
-  type: ActionType.RETURN_TO_MAIN_MENU;
-};
+  type: ActionType.RETURN_TO_MAIN_MENU
+}
 
 export type ReducerAction =
   | ScreenResizeAction
@@ -177,4 +177,4 @@ export type ReducerAction =
   | TickEventAction
   | ReadyForOverlayAction
   | ReadyForInputAction
-  | ReturnToMainMenuAction;
+  | ReturnToMainMenuAction

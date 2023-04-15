@@ -391,7 +391,7 @@ const Game: React.FC = () => {
       >
         {frogImg}
       </Frog>
-      <Timer />
+      {/* <Timer /> */}
       {lanes.map((lane, i) => {
         switch (lane.laneType) {
           case LaneType.GRASS:
@@ -492,11 +492,11 @@ function formatMillis(millis: number) {
 }
 
 const Timer: React.FC = () => {
-  let { gameStartTime, gameWinTime } = useSelector(
+  let { gameStartTime, gameEndTime } = useSelector(
     (state: GamePlayingState) => {
       return {
         gameStartTime: state.gameStartTime,
-        gameWinTime: state.gameWinTime,
+        gameEndTime: state.gameEndTime,
       }
     }
   )
@@ -507,8 +507,8 @@ const Timer: React.FC = () => {
   useEffect(() => {
     if (timeElapsed < 3599999) {
       const timeout = setTimeout(() => {
-        if (gameWinTime) {
-          setTimeElapsed(gameWinTime - gameStartTime)
+        if (gameEndTime) {
+          setTimeElapsed(gameEndTime - gameStartTime)
         } else {
           setTimeElapsed(
             Math.min(new Date().getTime() - gameStartTime, 3599999)
@@ -520,7 +520,7 @@ const Timer: React.FC = () => {
       }
     }
     // This will stop updating once timeElapsed stops changing.
-  }, [timeElapsed, gameStartTime, gameWinTime])
+  }, [timeElapsed, gameStartTime, gameEndTime])
 
   return (
     <div
@@ -674,20 +674,20 @@ const LostGameOverlay: React.FC = () => {
     return (
       <Swipeable
         onSwiped={(e: EventData) => {
-          if (e.dir === "Up") {
-            dispatch({ type: ActionType.START_GAME, mapType: mapType })
-          } else if (e.dir === "Left") {
-            dispatch({ type: ActionType.RETURN_TO_MAIN_MENU })
-          }
+          dispatch({ type: ActionType.RETURN_TO_MAIN_MENU })
         }}
       >
-        <GameOverlayDiv>
+        <GameOverlayDiv
+          onClick={() => {
+            dispatch({ type: ActionType.START_GAME, mapType: mapType })
+          }}
+        >
           <div className="overlay-title">YOU DIED</div>
           {/* <HighScoresTable /> */}
           <div className="overlay-footer">
-            [Swipe↑] to restart
+            [tap] to restart
             <br />
-            [Swipe←] for main menu
+            [Swipe] for main menu
           </div>
         </GameOverlayDiv>
       </Swipeable>
@@ -769,8 +769,8 @@ const HighScoresTable: React.FC = () => {
   let { mapType, finishTimeMs } = useSelector((state: GamePlayingState) => {
     return {
       mapType: state.mapType,
-      // Should be NaN if we haven't won the game yet
-      finishTimeMs: state.gameWinTime - state.gameStartTime,
+      // Should be NaN if the game hasn't ended yet
+      finishTimeMs: state.gameEndTime - state.gameStartTime,
     }
   })
 

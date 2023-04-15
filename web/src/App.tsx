@@ -683,7 +683,7 @@ const LostGameOverlay: React.FC = () => {
       >
         <GameOverlayDiv>
           <div className="overlay-title">YOU DIED</div>
-          <HighScoresTable />
+          {/* <HighScoresTable /> */}
           <div className="overlay-footer">
             [Swipe↑] to restart
             <br />
@@ -696,7 +696,7 @@ const LostGameOverlay: React.FC = () => {
     return (
       <GameOverlayDiv>
         <div className="overlay-title">YOU DIED</div>
-        <HighScoresTable />
+        {/* <HighScoresTable /> */}
         <div className="overlay-footer">
           [space] to restart
           <br />
@@ -740,7 +740,7 @@ const WonGameOverlay: React.FC = () => {
       >
         <GameOverlayDiv>
           <div className="overlay-title">YOU&nbsp;&nbsp;WIN</div>
-          <HighScoresTable />
+          {/* <HighScoresTable /> */}
           <div className="overlay-footer">[Swipe] for main menu</div>
         </GameOverlayDiv>
       </Swipeable>
@@ -749,7 +749,7 @@ const WonGameOverlay: React.FC = () => {
     return (
       <GameOverlayDiv>
         <div className="overlay-title">YOU&nbsp;&nbsp;WIN</div>
-        <HighScoresTable />
+        {/* <HighScoresTable /> */}
         <div className="overlay-footer">[esc] for main menu</div>
       </GameOverlayDiv>
     )
